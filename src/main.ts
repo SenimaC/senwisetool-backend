@@ -6,7 +6,13 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // supprime les champs non définis dans DTO
+      forbidNonWhitelisted: true, // renvoie une erreur si des champs non autorisés sont envoyés
+      transform: true, // transforme payload en instance de DTO
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Senima API')
@@ -14,7 +20,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('backend', app, document);
+  SwaggerModule.setup('docs', app, document);
 
   await app.listen(process.env.PORT ?? 5000);
 }

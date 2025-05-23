@@ -14,12 +14,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  OWNER
+  DEVELOPER
+  ADMIN
+}
+
+enum AccountRole {
+  ADG
+  AGENT
+  INSPECTOR
+  TRAINER
+}
+
 
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
+  password  String
   firstName String
   lastName  String
-  role      String   @default("user")
+  role      UserRole @default(ADMIN)
   createdAt DateTime @default(now())
+  isVerified Boolean @default(false)
+  verificationCode String?
+  refresh_token      String?
 }

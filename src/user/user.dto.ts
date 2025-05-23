@@ -1,22 +1,36 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
-import { UserRole } from 'src/types/user-type';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
-export class CreateUserDto {
-  @ApiProperty()
+export class RegisterDto {
+  @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   email: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'StrongPass123!' })
+  @IsString()
+  @MinLength(8, {
+    message: 'Le mot de passe doit contenir au moins 6 caractères',
+  })
+  password: string;
+
+  @ApiProperty({ example: 'Jean' })
   @IsString()
   firstName: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'Dupont' })
   @IsString()
   lastName: string;
+}
 
-  @ApiProperty({ enum: UserRole, required: false, default: UserRole.USER })
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+export class LoginDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: 'StrongPass123!' })
+  @IsString()
+  @MinLength(8, {
+    message: 'Le mot de passe doit contenir au moins 6 caractères',
+  })
+  password: string;
 }

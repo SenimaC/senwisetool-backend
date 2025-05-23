@@ -1,4 +1,12 @@
 export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
+  OWNER = 'OWNER',
+  DEVELOPER = 'DEVELOPER',
+  ADMIN = 'ADMIN',
+}
+
+export enum AccountRole {
+  ADG = 'ADG',
+  AGENT = 'AGENT',
+  INSPECTOR = 'INSPECTOR',
+  TRAINER = 'TRAINER',
 }
