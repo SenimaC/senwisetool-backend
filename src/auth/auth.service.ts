@@ -9,7 +9,6 @@ import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
 import { LoginDto, RegisterDto } from 'src/user/user.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { generate6DigitCode } from './auth.utils';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +29,7 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const verificationCode = generate6DigitCode();
+    // const verificationCode = generate6DigitCode();
 
     const user = await this.prisma.user.create({
       data: {
@@ -38,22 +37,24 @@ export class AuthService {
         password: hashedPassword,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        verificationCode,
       },
     });
 
-    await this.mailService.sendVerificationCode(dto.email, verificationCode);
+    await this.resendEmailVerificationCode(user.email);
 
-    const token = this.jwtService.sign({ sub: user.id });
+    const tokens = await this.generateTokens(user.id, user.email);
 
     const apiResponse = {
-      message: 'Compte créé avec succès.',
-      token,
-      email: user.email,
+      message:
+        'Compte créé avec succès. Un code de verification à été envoyé à votre email',
+      statusCode: 201,
+      data: {
+        tokens,
+        email: user.email,
+      },
     };
 
     Logger.log(apiResponse);
-
     return apiResponse;
   }
 
@@ -66,7 +67,6 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refresh_token);
 
     const apiResponse = {
       message: 'Connexion réussie',
@@ -76,46 +76,149 @@ export class AuthService {
     return apiResponse;
   }
 
+  async resendEmailVerificationCode(email: string) {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await this.mailService.sendVerificationCode(email, code); // À faire
+    await this.prisma.user.update({
+      where: { email },
+      data: {
+        emailVerificationCode: code,
+        emailVerificationExpires: new Date(Date.now() + 5 * 60 * 1000), // 5 min
+      },
+    });
+  }
+
+  async verifyEmail(email: string, code: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (!user) throw new ForbiddenException('Utilisateur non trouvé');
+
+    if (user.isEmailVerified) return { message: 'Email déjà vérifié' };
+
+    if (!user.emailVerificationCode || user.emailVerificationCode !== code) {
+      throw new ForbiddenException('Code de vérification invalide');
+    }
+
+    if (
+      user.emailVerificationExpires &&
+      user.emailVerificationExpires < new Date()
+    ) {
+      throw new ForbiddenException('Code expiré');
+    }
+
+    await this.prisma.user.update({
+      where: { email: email },
+      data: {
+        isEmailVerified: true,
+        emailVerificationCode: null,
+        emailVerificationExpires: null,
+      },
+    });
+
+    const apiResponse = {
+      message: 'Email vérifié avec succès.',
+      statusCode: 201,
+    };
+
+    Logger.log(apiResponse);
+    return apiResponse;
+  }
+
   async generateTokens(userId: string, email: string) {
     const payload = { sub: userId, email };
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_SECRET,
-        expiresIn: '15m',
+        expiresIn: '5m',
       }),
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_REFRESH_SECRET,
-        expiresIn: '7d',
+        expiresIn: '1d',
       }),
     ]);
+
+    const hash = await bcrypt.hash(refresh_token, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: hash },
+    });
+
     return { access_token, refresh_token };
   }
 
-  async updateRefreshToken(userId: string, rt: string) {
-    const hash = await bcrypt.hash(rt, 10);
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refresh_token: hash },
-    });
+  async refreshTokens(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+      if (!user || !user.refreshToken)
+        throw new ForbiddenException('Accès refusé');
+
+      const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
+      if (!rtMatches) throw new ForbiddenException('Token invalide');
+
+      const tokens = await this.generateTokens(user.id, user.email);
+
+      return tokens;
+    } catch (error) {
+      throw new ForbiddenException(`Token invalide ou expiré : ${error}`);
+    }
   }
 
-  async refreshTokens(userId: string, rt: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.refresh_token)
-      throw new ForbiddenException('Accès refusé');
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) return;
 
-    const matches = await bcrypt.compare(rt, user.refresh_token);
-    if (!matches) throw new ForbiddenException('Refresh token invalide');
+    const token = await this.jwtService.signAsync(
+      { sub: user.id, email },
+      {
+        secret: process.env.JWT_SECRET,
+        expiresIn: '5m',
+      },
+    );
 
-    const tokens = await this.generateTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refresh_token);
-    return tokens;
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken: token },
+    });
+
+    const resetLink = `https://tonfrontend/reset-password?token=${token}`;
+
+    await this.mailService.sendResetPasswordEmail(user.email, resetLink);
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { refreshToken: token },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Token invalide');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        refreshToken: null, // Invalider le token après usage
+      },
+    });
   }
 
   async logout(userId: string) {
     await this.prisma.user.update({
       where: { id: userId },
-      data: { refresh_token: null },
+      data: { refreshToken: null },
     });
   }
 }

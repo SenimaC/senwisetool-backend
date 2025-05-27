@@ -27,16 +27,16 @@ enum AccountRole {
   TRAINER
 }
 
-
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  role      UserRole @default(ADMIN)
-  createdAt DateTime @default(now())
-  isVerified Boolean @default(false)
-  verificationCode String?
-  refresh_token      String?
+  id                         String   @id @default(cuid())
+  email                      String   @unique
+  password                   String
+  firstName                  String
+  lastName                   String
+  role                       UserRole @default(ADMIN)
+  createdAt                  DateTime @default(now())
+  isEmailVerified            Boolean  @default(false)
+  emailVerificationCode      String?
+  emailVerificationExpires   DateTime?
+  refreshToken              String?
 }

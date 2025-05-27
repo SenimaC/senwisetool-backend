@@ -4,7 +4,32 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    cors: false, // On gère le CORS après explicitement
+  });
+
+  const allowedOrigins = (process.env.URLS_AUTHORIZED || '')
+    .split(',')
+    .map((origin) => origin.trim());
+
+  if (process.env.APP_ENV !== 'production') {
+    app.enableCors({
+      origin: '*',
+      allowedHeaders: '*',
+      credentials: true,
+    });
+  } else {
+    app.enableCors({
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
+    });
+  }
 
   app.useGlobalPipes(
     new ValidationPipe({
