@@ -43,19 +43,26 @@ export class VerifyEmailDto {
 }
 
 export class RefreshTokenDto {
+  @ApiProperty({
+    example:
+      'eyJhbGciIkpXVCJ9.eyJzdWIiOiJjbWI2NnRkMWkwMDAnFuejRoNDJnIiwiaWF04MzMwNDY4LCJleHAiE3NDgzOiJIUzI1NiIsInR5cCI6MzA3Njh9.9rbC22agjjfgBH6btlNCWdiSsXIjoxNzQOnpkvwOHAzYc5B8n',
+  })
   @IsString()
   refreshToken: string;
 }
 
 export class ForgotPasswordDto {
+  @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   email: string;
 }
 
 export class ResetPasswordDto {
+  @ApiProperty({ example: 'user@example.com' })
   @IsString()
   token: string;
 
+  @ApiProperty({ example: 'StrongPass123' })
   @IsString()
   @MinLength(6)
   newPassword: string;

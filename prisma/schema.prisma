@@ -27,6 +27,14 @@ enum AccountRole {
   TRAINER
 }
 
+enum UserStatus {
+  REGISTERED
+  ACTIVE
+  DISABLED
+  DELETED
+  BANNED
+}
+
 model User {
   id                         String   @id @default(cuid())
   email                      String   @unique
@@ -38,5 +46,44 @@ model User {
   isEmailVerified            Boolean  @default(false)
   emailVerificationCode      String?
   emailVerificationExpires   DateTime?
-  refreshToken              String?
+  refreshToken               String?
+  status                     UserStatus?
+
+  Company Company[]
 }
+
+enum CompanyStatus {
+  BUILDING
+  ACTIVE
+  BLOCKED
+  ARCHIVED
+}
+
+model Company {
+  id               String    @id @default(cuid())
+  name             String
+  description      String
+  sector           String
+  logo             String?     // URL vers S3
+
+  country          String?
+  region           String?
+  city             String?
+  address          String?
+
+  email            String?      @unique
+  phoneNumber      String?
+
+  emailVerified              Boolean     @default(false)
+  emailVerificationCode      String?
+  emailVerificationExpires   DateTime?
+
+  bucketName       String?     // Nom du bucket AWS S3
+  status           CompanyStatus @default(BUILDING)
+  onboardingSteps  Int[]       // ex: [1, 2, 3]
+  createdAt        DateTime    @default(now())
+
+  ownerId          String
+  owner            User        @relation(fields: [ownerId], references: [id])
+}
+

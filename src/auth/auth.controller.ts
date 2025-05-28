@@ -1,5 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { JwtUser } from 'common/types/user.type';
+import { JwtUser } from 'src/types/user.type';
 import {
   LoginDto,
   RefreshTokenDto,
@@ -25,6 +25,12 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('resend-email-verification')
+  resendEmailVerification(@AuthUser() user: JwtUser) {
+    return this.authService.resendEmailVerification(user.email);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('verify-email')
   verifyEmail(@AuthUser() user: JwtUser, @Body() dto: VerifyEmailDto) {
     return this.authService.verifyEmail(user.email, dto.code);
@@ -33,6 +39,12 @@ export class AuthController {
   @Post('refresh')
   refreshTokens(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshTokens(dto.refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  logout(@AuthUser() user: JwtUser) {
+    return this.authService.logout(user.id);
   }
 
   // @UseGuards(JwtAuthGuard)

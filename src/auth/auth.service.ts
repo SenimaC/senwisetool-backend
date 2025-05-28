@@ -40,7 +40,7 @@ export class AuthService {
       },
     });
 
-    await this.resendEmailVerificationCode(user.email);
+    await this.resendEmailVerification(user.email);
 
     const tokens = await this.generateTokens(user.id, user.email);
 
@@ -50,7 +50,6 @@ export class AuthService {
       statusCode: 201,
       data: {
         tokens,
-        email: user.email,
       },
     };
 
@@ -70,15 +69,19 @@ export class AuthService {
 
     const apiResponse = {
       message: 'Connexion réussie',
-      ...tokens,
+      statusCode: 201,
+      data: {
+        tokens,
+      },
     };
 
+    Logger.log(apiResponse);
     return apiResponse;
   }
 
-  async resendEmailVerificationCode(email: string) {
+  async resendEmailVerification(email: string) {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await this.mailService.sendVerificationCode(email, code); // À faire
+    await this.mailService.sendVerificationCode(email, code);
     await this.prisma.user.update({
       where: { email },
       data: {
@@ -86,6 +89,14 @@ export class AuthService {
         emailVerificationExpires: new Date(Date.now() + 5 * 60 * 1000), // 5 min
       },
     });
+
+    const apiResponse = {
+      message: 'email de verification envoyée avec succes',
+      statusCode: 201,
+    };
+
+    Logger.log(apiResponse);
+    return apiResponse;
   }
 
   async verifyEmail(email: string, code: string) {
@@ -118,7 +129,7 @@ export class AuthService {
     });
 
     const apiResponse = {
-      message: 'Email vérifié avec succès.',
+      message: `${email} : Email vérifié avec succès.`,
       statusCode: 201,
     };
 
@@ -145,6 +156,7 @@ export class AuthService {
       data: { refreshToken: hash },
     });
 
+    Logger.log(`${email} : tokens générés`);
     return { access_token, refresh_token };
   }
 
@@ -181,7 +193,7 @@ export class AuthService {
       { sub: user.id, email },
       {
         secret: process.env.JWT_SECRET,
-        expiresIn: '5m',
+        expiresIn: '2m',
       },
     );
 
@@ -191,6 +203,8 @@ export class AuthService {
     });
 
     const resetLink = `https://tonfrontend/reset-password?token=${token}`;
+
+    Logger.log(resetLink);
 
     await this.mailService.sendResetPasswordEmail(user.email, resetLink);
   }

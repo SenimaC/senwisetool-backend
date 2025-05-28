@@ -10,3 +10,8 @@ export enum AccountRole {
   INSPECTOR = 'INSPECTOR',
   TRAINER = 'TRAINER',
 }
+
+export interface JwtUser {
+  id: string;
+  email: string;
+}

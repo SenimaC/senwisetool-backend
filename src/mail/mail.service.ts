@@ -80,7 +80,7 @@ export class MailService {
         <!-- Titre branding -->
         <div style="text-align: center; margin-bottom: 24px;">
           <div style="font-size: 32px; font-weight: bold; color: #1F3B4D;">
-            📩<span style="color: #F6C90E;">Sen</span><span style="color: #1F3B4D;">Wise</span><span style="color:rgb(30, 148, 0);">Tool</span>
+            🔐<span style="color: #F6C90E;">Sen</span><span style="color: #1F3B4D;">Wise</span><span style="color:rgb(30, 148, 0);">Tool</span>
           </div>
           <div style="font-size: 13px; color: #888888;">
             La digitalisation des services de traçabilité.

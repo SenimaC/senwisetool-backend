@@ -1,0 +1,14 @@
+export enum UserStatus {
+  REGISTERED = 'REGISTERED',
+  ACTIVE = 'ACTIVE',
+  DISABLED = 'DISABLED',
+  DELETED = 'DELETED',
+  BANNED = 'BANNED',
+}
+
+export enum OnboardingStep {
+  COMPANY = 'COMPANY',
+  LOCATION = 'LOCATION',
+  CONTACT = 'CONTACT',
+  EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
+}
