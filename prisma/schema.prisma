@@ -15,13 +15,16 @@ datasource db {
 }
 
 enum UserRole {
-  OWNER
   DEVELOPER
-  ADMIN
+  OWNER
+  PDG
+  DG
+  ADG
+  ASSISTANT
 }
 
-enum AccountRole {
-  ADG
+enum AssistantRole {
+  MENDATAIRE
   AGENT
   INSPECTOR
   TRAINER
@@ -41,49 +44,55 @@ model User {
   password                   String
   firstName                  String
   lastName                   String
-  role                       UserRole @default(ADMIN)
+  role                       UserRole @default(DG)
   createdAt                  DateTime @default(now())
   isEmailVerified            Boolean  @default(false)
-  emailVerificationCode      String?
-  emailVerificationExpires   DateTime?
-  refreshToken               String?
-  status                     UserStatus?
 
-  Company Company[]
+  codeVerificationProcess    Boolean     @default(false)
+  codeVerification           String?
+  codeVerificationExpires    DateTime?
+
+  refreshToken               String?
+  status                     UserStatus @default(REGISTERED)
+
+  Company                    Company?
 }
 
 enum CompanyStatus {
-  BUILDING
+  PENDING_APPROVAL
   ACTIVE
   BLOCKED
-  ARCHIVED
+  REJECTED
+  MAINTENANCE
+  CLOSE
 }
 
 model Company {
-  id               String    @id @default(cuid())
-  name             String
-  description      String
-  sector           String
-  logo             String?     // URL vers S3
+  id                         String    @id @default(cuid())
+  name                       String
+  description                String
+  sector                     String
+  logo                       String     // URL vers S3
+  authorization              String     // URL vers S3
 
-  country          String?
-  region           String?
-  city             String?
-  address          String?
+  country                    String?
+  region                     String?
+  city                       String?
+  address                    String?
 
-  email            String?      @unique
-  phoneNumber      String?
+  email                      String?      @unique
+  phoneNumber                String?
 
-  emailVerified              Boolean     @default(false)
+  isEmailVerified            Boolean     @default(false)
   emailVerificationCode      String?
   emailVerificationExpires   DateTime?
 
-  bucketName       String?     // Nom du bucket AWS S3
-  status           CompanyStatus @default(BUILDING)
-  onboardingSteps  Int[]       // ex: [1, 2, 3]
-  createdAt        DateTime    @default(now())
+  bucketName                 String?     // Nom du bucket AWS S3
+  status                     CompanyStatus @default(PENDING_APPROVAL)
+  onboardingSteps            Int[]       // ex: [1, 2, 3]
+  createdAt                  DateTime    @default(now())
 
-  ownerId          String
-  owner            User        @relation(fields: [ownerId], references: [id])
+  ownerId                    String @unique
+  owner                      User        @relation(fields: [ownerId], references: [id])
 }
 

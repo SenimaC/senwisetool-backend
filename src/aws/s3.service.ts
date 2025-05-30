@@ -2,7 +2,6 @@
 import {
   CreateBucketCommand,
   HeadBucketCommand,
-  PutBucketAclCommand,
   PutBucketPolicyCommand,
   PutObjectCommand,
   PutPublicAccessBlockCommand,
@@ -13,7 +12,7 @@ import {
 // import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { uniqueString } from 'src/utils/tools';
+import { uniqueString } from 'src/common/helpers/string-generator';
 
 @Injectable()
 export class S3Service {
@@ -53,6 +52,42 @@ export class S3Service {
     await this.s3.send(new CreateBucketCommand({ Bucket: bucketName }));
     Logger.log(`✅ Bucket créé : ${bucketName}`);
 
+    // Désactiver le blocage des accès publics
+    await this.s3.send(
+      new PutPublicAccessBlockCommand({
+        Bucket: bucketName,
+        PublicAccessBlockConfiguration: {
+          BlockPublicAcls: false,
+          IgnorePublicAcls: false,
+          BlockPublicPolicy: false,
+          RestrictPublicBuckets: false,
+        },
+      }),
+    );
+    Logger.log(`🔓 Accès public activé sur le bucket : ${bucketName}`);
+
+    // Ajouter une policy pour autoriser la lecture publique des objets
+    const publicPolicy = {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Sid: 'PublicReadGetObject',
+          Effect: 'Allow',
+          Principal: '*',
+          Action: 's3:GetObject',
+          Resource: `arn:aws:s3:::${bucketName}/*`,
+        },
+      ],
+    };
+
+    await this.s3.send(
+      new PutBucketPolicyCommand({
+        Bucket: bucketName,
+        Policy: JSON.stringify(publicPolicy),
+      }),
+    );
+    Logger.log(`📜 Policy publique appliquée sur le bucket : ${bucketName}`);
+
     return bucketName;
   }
 
@@ -78,89 +113,4 @@ export class S3Service {
     Logger.log(`✅ Logo de la compagnie uploadé avec success : ${logoUrl}`);
     return logoUrl;
   }
-
-  // Fonction pour désactiver l'accès public
-  private disablePublicAccess = async (bucketName: string) => {
-    try {
-      const params = {
-        Bucket: bucketName,
-        ACL: 'private' as const, // Désactiver l'accès public en définissant ACL à "private"
-      };
-
-      const command = new PutBucketAclCommand(params);
-      await this.s3.send(command);
-      console.log('Public access disabled successfully');
-    } catch (error) {
-      console.error('Error disabling public access:', error);
-      throw error;
-    }
-  };
-
-  // Fonction pour désactiver le blocage de l'accès public
-  private disablePublicAccessBlock = async (bucketName: string) => {
-    try {
-      const params = {
-        Bucket: bucketName,
-        PublicAccessBlockConfiguration: {
-          BlockPublicAcls: false, // Ne pas bloquer les ACL publiques
-          IgnorePublicAcls: false, // Ne pas ignorer les ACL publiques
-          BlockPublicPolicy: false, // Ne pas bloquer les politiques publiques
-          RestrictPublicBuckets: false, // Ne pas restreindre les buckets publics
-        },
-      };
-
-      const command = new PutPublicAccessBlockCommand(params);
-      await this.s3.send(command);
-      return { data: true };
-    } catch (error) {
-      return { error: error };
-    }
-  };
-
-  // Fonction pour mettre à jour la politique du bucket
-  private updateBucketPolicy = async (bucketName: string) => {
-    const bucketPolicy = {
-      Version: '2012-10-17',
-      Statement: [
-        {
-          Effect: 'Allow',
-          Principal: '*',
-          Action: 's3:GetObject',
-          Resource: `arn:aws:s3:::${bucketName}/*`,
-        },
-      ],
-    };
-
-    try {
-      const params = {
-        Bucket: bucketName,
-        Policy: JSON.stringify(bucketPolicy),
-      };
-
-      const command = new PutBucketPolicyCommand(params);
-      await this.s3.send(command);
-      return { data: true };
-    } catch (error) {
-      return { error: error };
-    }
-  };
-
-  // Générer une URL signée pour accéder à un fichier
-  // getSignedFileUrl = async (bucketName: string, key: string, delay: number) => {
-  //   try {
-  //     const command = new GetObjectCommand({
-  //       Bucket: bucketName,
-  //       Key: key,
-  //     });
-
-  //     // URL signée avec expiration de 1 heure (vous pouvez ajuster cela)
-  //     const signedUrl = await getSignedUrl(this.s3, command, {
-  //       expiresIn: delay,
-  //     });
-  //     return signedUrl;
-  //   } catch (error) {
-  //     console.error('Error generating signed URL:', error);
-  //     throw error;
-  //   }
-  // };
 }

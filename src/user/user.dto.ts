@@ -1,18 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, Length, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Length,
+  MinLength,
+} from 'class-validator';
+import { UserRegisterSource } from 'src/common/types/user.type';
 
 export class RegisterDto {
-  @ApiProperty({ example: 'user@example.com' })
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ example: 'StrongPass123!' })
-  @IsString()
-  @MinLength(8, {
-    message: 'Le mot de passe doit contenir au moins 6 caractères',
-  })
-  password: string;
-
   @ApiProperty({ example: 'Jean' })
   @IsString()
   firstName: string;
@@ -20,6 +18,25 @@ export class RegisterDto {
   @ApiProperty({ example: 'Dupont' })
   @IsString()
   lastName: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiPropertyOptional({ example: UserRole.DG, enum: UserRole })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
+
+  @ApiPropertyOptional({
+    example: UserRegisterSource.PUBLIC,
+    enum: UserRegisterSource,
+  })
+  @IsOptional()
+  @IsEnum(UserRegisterSource, {
+    message: 'source must be one of SCRIPT, PUBLIC, or DEVELOPER',
+  })
+  source?: UserRegisterSource = UserRegisterSource.PUBLIC;
 }
 
 export class LoginDto {
@@ -35,7 +52,17 @@ export class LoginDto {
   password: string;
 }
 
+export class resendEmailVerificationDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+}
+
 export class VerifyEmailDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+
   @ApiProperty({ example: '678945' })
   @IsString()
   @Length(6, 6)
@@ -66,4 +93,24 @@ export class ResetPasswordDto {
   @IsString()
   @MinLength(6)
   newPassword: string;
+}
+
+// User DTO
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }

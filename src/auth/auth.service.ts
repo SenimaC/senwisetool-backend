@@ -3,11 +3,26 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import {
+  errorResponse,
+  successResponse,
+} from 'src/common/helpers/api-response.helper';
+import {
+  generate6DigitCode,
+  generateSecurePassword,
+} from 'src/common/helpers/string-generator';
+import { ApiResponse } from 'src/common/types/api-response.type';
 import { MailService } from 'src/mail/mail.service';
-import { LoginDto, RegisterDto } from 'src/user/user.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  resendEmailVerificationDto,
+  VerifyEmailDto,
+} from 'src/user/user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -19,126 +34,154 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+  async register(dto: RegisterDto): Promise<ApiResponse<any>> {
+    try {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
 
-    if (existingUser) {
-      throw new BadRequestException('Email déjà utilisé');
+      if (existingUser) {
+        throw new BadRequestException('Email déjà utilisé');
+      }
+
+      const hashedPassword = await this.sendUserCredential(dto.email);
+
+      await this.prisma.user.create({
+        data: {
+          ...dto,
+          password: hashedPassword,
+        },
+      });
+
+      return successResponse(
+        'Compte créé avec succès. Les informations de connexion ont été envoyées à votre adresse email.',
+        201,
+      );
+    } catch (error) {
+      return errorResponse(error);
     }
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    // const verificationCode = generate6DigitCode();
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        password: hashedPassword,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-      },
-    });
-
-    await this.resendEmailVerification(user.email);
-
-    const tokens = await this.generateTokens(user.id, user.email);
-
-    const apiResponse = {
-      message:
-        'Compte créé avec succès. Un code de verification à été envoyé à votre email',
-      statusCode: 201,
-      data: {
-        tokens,
-      },
-    };
-
-    Logger.log(apiResponse);
-    return apiResponse;
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-      throw new ForbiddenException('Identifiants invalides');
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (!user || !(await bcrypt.compare(dto.password, user.password)))
+        throw new ForbiddenException('Identifiants invalides');
+
+      if (!user.isEmailVerified) {
+        const userVerified = await this.prisma.user.update({
+          where: { email: user.email },
+          data: { isEmailVerified: true },
+        });
+
+        if (!userVerified)
+          throw new Error(
+            "Erreur lors de la vérification de l'email de l'utilisateur",
+          );
+      }
+
+      const tokens = await this.generateTokens(user.id);
+
+      return successResponse('Connexion réussie', 201, tokens.data);
+    } catch (error) {
+      errorResponse(error);
     }
-
-    const tokens = await this.generateTokens(user.id, user.email);
-
-    const apiResponse = {
-      message: 'Connexion réussie',
-      statusCode: 201,
-      data: {
-        tokens,
-      },
-    };
-
-    Logger.log(apiResponse);
-    return apiResponse;
   }
 
-  async resendEmailVerification(email: string) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await this.mailService.sendVerificationCode(email, code);
-    await this.prisma.user.update({
-      where: { email },
-      data: {
-        emailVerificationCode: code,
-        emailVerificationExpires: new Date(Date.now() + 5 * 60 * 1000), // 5 min
-      },
-    });
+  async sendUserCredential(email: string) {
+    try {
+      const password = generateSecurePassword();
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    const apiResponse = {
-      message: 'email de verification envoyée avec succes',
-      statusCode: 201,
-    };
+      await this.mailService.sendAuthCredential(email, email, password);
 
-    Logger.log(apiResponse);
-    return apiResponse;
+      return hashedPassword;
+    } catch (error) {
+      errorResponse(error);
+    }
   }
 
-  async verifyEmail(email: string, code: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: email },
-    });
+  async resendEmailVerification(dto: resendEmailVerificationDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (!user) throw new NotFoundException('Utilisateur introuvable');
 
-    if (!user) throw new ForbiddenException('Utilisateur non trouvé');
+      const code = generate6DigitCode;
+      await this.mailService.sendEmailVerificationCode(dto.email, code);
 
-    if (user.isEmailVerified) return { message: 'Email déjà vérifié' };
+      await this.prisma.user.update({
+        where: { email: dto.email },
+        data: {
+          codeVerificationProcess: true,
+          codeVerification: code,
+          codeVerificationExpires: new Date(Date.now() + 2 * 60 * 1000), // 2 min
+        },
+      });
 
-    if (!user.emailVerificationCode || user.emailVerificationCode !== code) {
-      throw new ForbiddenException('Code de vérification invalide');
+      return successResponse(
+        'Un code de vérification à été envoyé à votre adresse email',
+        201,
+      );
+    } catch (error) {
+      errorResponse(error);
     }
-
-    if (
-      user.emailVerificationExpires &&
-      user.emailVerificationExpires < new Date()
-    ) {
-      throw new ForbiddenException('Code expiré');
-    }
-
-    await this.prisma.user.update({
-      where: { email: email },
-      data: {
-        isEmailVerified: true,
-        emailVerificationCode: null,
-        emailVerificationExpires: null,
-      },
-    });
-
-    const apiResponse = {
-      message: `${email} : Email vérifié avec succès.`,
-      statusCode: 201,
-    };
-
-    Logger.log(apiResponse);
-    return apiResponse;
   }
 
-  async generateTokens(userId: string, email: string) {
-    const payload = { sub: userId, email };
+  async verifyEmail(dto: VerifyEmailDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+
+      if (!user) throw new ForbiddenException('Utilisateur non trouvé');
+
+      if (!user.codeVerificationProcess)
+        throw new ForbiddenException(
+          "Aucun proccessus de verification d'email enclanché sur ce compte",
+        );
+
+      if (!user.codeVerification || user.codeVerification !== dto.code) {
+        throw new ForbiddenException('Code de vérification invalide');
+      }
+
+      if (
+        user.codeVerificationExpires &&
+        user.codeVerificationExpires < new Date()
+      ) {
+        throw new ForbiddenException('Code expiré');
+      }
+
+      await this.prisma.user.update({
+        where: { email: dto.email },
+        data: {
+          codeVerificationProcess: false,
+          codeVerification: null,
+          codeVerificationExpires: null,
+        },
+      });
+
+      const hashedPassword = await this.sendUserCredential(dto.email);
+
+      await this.prisma.user.update({
+        where: { email: dto.email },
+        data: {
+          password: hashedPassword,
+        },
+      });
+      return successResponse(
+        `vos informations de connexions ont été envoyées sur ${dto.email}`,
+      );
+    } catch (error) {
+      errorResponse(error);
+    }
+  }
+
+  async generateTokens(userId: string) {
+    const payload = { sub: userId };
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_SECRET,
@@ -156,8 +199,14 @@ export class AuthService {
       data: { refreshToken: hash },
     });
 
-    Logger.log(`${email} : tokens générés`);
-    return { access_token, refresh_token };
+    const apiResponse = {
+      message: 'Tokens générés avec succes',
+      statusCode: 201,
+      data: { access_token, refresh_token },
+    };
+
+    Logger.log(`tokens générés : ${apiResponse}`);
+    return apiResponse;
   }
 
   async refreshTokens(refreshToken: string) {
@@ -175,11 +224,13 @@ export class AuthService {
       const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
       if (!rtMatches) throw new ForbiddenException('Token invalide');
 
-      const tokens = await this.generateTokens(user.id, user.email);
+      const apiResponse = await this.generateTokens(user.id);
 
-      return tokens;
+      return apiResponse;
     } catch (error) {
-      throw new ForbiddenException(`Token invalide ou expiré : ${error}`);
+      const errorMessage = `Token invalide ou expiré : ${error}`;
+      Logger.error(errorMessage);
+      throw new ForbiddenException(errorMessage);
     }
   }
 
@@ -204,9 +255,16 @@ export class AuthService {
 
     const resetLink = `https://tonfrontend/reset-password?token=${token}`;
 
-    Logger.log(resetLink);
-
     await this.mailService.sendResetPasswordEmail(user.email, resetLink);
+
+    const apiResponse = {
+      message: 'Lien de reinitialisation envoyé à votre adresse email',
+      statusCode: 201,
+      data: { resetLink },
+    };
+
+    Logger.log(apiResponse);
+    return apiResponse;
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -227,6 +285,14 @@ export class AuthService {
         refreshToken: null, // Invalider le token après usage
       },
     });
+
+    const apiResponse = {
+      message: 'Mot de passe reinitialisé avec succès',
+      statusCode: 201,
+    };
+
+    Logger.log(apiResponse);
+    return apiResponse;
   }
 
   async logout(userId: string) {

@@ -1,21 +1,64 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { emailAndPasswordHtmlMail, htmlSendCodeMail } from './mail.html';
 
 @Injectable()
 export class MailService {
   private readonly transporter;
+  private readonly user_mail: string;
 
-  constructor() {
+  constructor(private configService: ConfigService) {
+    this.user_mail = this.configService.get('MAIL_USER');
+
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
-      port: parseInt(process.env.MAIL_PORT),
-      secure: process.env.MAIL_SECURE === 'true',
+      host: this.configService.get('MAIL_HOST'),
+      port: parseInt(this.configService.get('MAIL_PORT')),
+      secure: this.configService.get('MAIL_SECURE') === 'true',
       auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        user: this.user_mail,
+        pass: this.configService.get('MAIL_PASS'),
       },
     });
   }
+
+  mailSender = async (
+    from: string,
+    to: string,
+    subject: string,
+    html: string,
+  ) => {
+    const mailOptions = {
+      from,
+      to,
+      subject,
+      html,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      Logger.log(`Code envoyé à ${to}`);
+    } catch (err) {
+      Logger.error(`Échec d'envoi à ${to} :`, err);
+      throw err;
+    }
+  };
+
+  sendAuthCredential = async (to: string, email: string, password: string) =>
+    this.mailSender(
+      `"SenWiseTool" <${this.user_mail}>`,
+      to,
+      'Informations de connexion',
+      emailAndPasswordHtmlMail(email, password),
+    );
+
+  sendEmailVerificationCode = async (to: string, code: string) =>
+    this.mailSender(
+      `"SenWiseTool" <${this.user_mail}>`,
+      to,
+      'Informations de connexion',
+      htmlSendCodeMail(code),
+    );
 
   async sendVerificationCode(to: string, code: string) {
     const html = `
@@ -52,7 +95,7 @@ export class MailService {
   `;
 
     const mailOptions = {
-      from: `"SenWise Auth" <${process.env.MAIL_USER}>`,
+      from: `"SenWiseTool" <${this.user_mail}>`,
       to,
       subject: 'Votre code de vérification',
       html: html,
@@ -110,7 +153,7 @@ export class MailService {
   `;
 
     const mailOptions = {
-      from: `"SenWise Auth" <${process.env.MAIL_USER}>`,
+      from: `"SenWise Auth" <${this.user_mail}>`,
       to,
       subject: 'Votre code de vérification',
       html: html,
