@@ -31,4 +31,5 @@ export type UserResponse = {
   lastName: string;
   email: string;
   role: string;
+  isEmailVerified: boolean;
 };

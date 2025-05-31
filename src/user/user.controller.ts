@@ -25,13 +25,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Request() req) {
-    return this.userService.findOne(req.user.id);
+    return this.userService.getUser(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.userService.findOne(id);
+    return this.userService.getUser(id);
   }
 
   @UseGuards(JwtAuthGuard)

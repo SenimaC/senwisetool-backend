@@ -23,6 +23,7 @@ import {
   resendEmailVerificationDto,
   VerifyEmailDto,
 } from 'src/user/user.dto';
+import { UserService } from 'src/user/user.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -30,6 +31,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private readonly userService: UserService,
     private mailService: MailService,
     private jwt: JwtService,
   ) {}
@@ -84,7 +86,12 @@ export class AuthService {
 
       const tokens = await this.generateTokens(user.id);
 
-      return successResponse('Connexion réussie', 201, tokens.data);
+      const userData = this.userService.getUser(user.id);
+
+      return successResponse('Connexion réussie', 201, {
+        ...tokens.data,
+        user: userData,
+      });
     } catch (error) {
       errorResponse(error);
     }
