@@ -29,7 +29,7 @@ export const emailAndPasswordHtmlMail = (email: string, password: string) => {
     </p>
 
     <div style="text-align: center; margin-top: 30px;">
-      <a href="${baseUrl}/login" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
+      <a href="${baseUrl}/auth" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
         Se connecter maintenant
       </a>
     </div>
