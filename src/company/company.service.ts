@@ -3,9 +3,9 @@ import { generate6DigitCode } from 'src/common/helpers/string-generator';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
-  CreateCompanyStepCompanyDto,
   CreateCompanyStepContactDto,
   CreateCompanyStepEmailVerificationDto,
+  CreateCompanyStepInitDto,
   CreateCompanyStepLocationDto,
 } from './company.dto';
 
@@ -17,7 +17,7 @@ export class CompanyService {
   ) {}
 
   async createStepCompany(
-    dto: CreateCompanyStepCompanyDto,
+    dto: CreateCompanyStepInitDto,
     ownerId: string,
     bucketName: string,
     logoUrl: string,

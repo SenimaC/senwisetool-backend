@@ -20,10 +20,7 @@ export class ApiResponseInterceptor<T>
 
     return next.handle().pipe(
       map((data: any) => ({
-        success: true,
-        statusCode: data?.statusCode || 200,
-        message: data?.message || 'Requête traitée avec succès',
-        data: data?.data ?? data,
+        ...(data?.data ?? data),
         timestamp: new Date().toISOString(),
         path: request.url,
       })),

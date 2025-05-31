@@ -21,6 +21,7 @@ export function errorResponse(
 ): ApiResponse<null> {
   const timestamp = new Date().toISOString();
 
+  console.log('message : ', typeof messageOrError);
   if (typeof messageOrError === 'string') {
     return {
       data: null,

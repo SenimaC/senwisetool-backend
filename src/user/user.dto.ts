@@ -95,6 +95,22 @@ export class ResetPasswordDto {
   newPassword: string;
 }
 
+export class ChangePasswordDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: 'StrongPass123' })
+  @IsString()
+  @MinLength(6)
+  currentPassword: string;
+
+  @ApiProperty({ example: 'StrongPass123' })
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
+}
+
 // User DTO
 
 export class UpdateUserDto {

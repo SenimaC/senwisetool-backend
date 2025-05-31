@@ -14,6 +14,7 @@ import {
   UserRole,
 } from 'src/common/types/user.type';
 import {
+  ChangePasswordDto,
   LoginDto,
   RefreshTokenDto,
   RegisterDto,
@@ -75,6 +76,12 @@ export class AuthController {
   @Post('verify-email')
   verifyEmail(@Body() dto: VerifyEmailDto) {
     return this.authService.verifyEmail(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  changePassword(@Body() dto: ChangePasswordDto, @AuthUser() user: JwtUser) {
+    return this.authService.changePassword(dto, user.id);
   }
 
   @Post('refresh')

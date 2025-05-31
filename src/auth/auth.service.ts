@@ -25,6 +25,7 @@ import {
 } from 'src/user/user.dto';
 import { UserService } from 'src/user/user.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChangePasswordDto } from './../user/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -72,25 +73,13 @@ export class AuthService {
       if (!user || !(await bcrypt.compare(dto.password, user.password)))
         throw new ForbiddenException('Identifiants invalides');
 
-      if (!user.isEmailVerified) {
-        const userVerified = await this.prisma.user.update({
-          where: { email: user.email },
-          data: { isEmailVerified: true },
-        });
-
-        if (!userVerified)
-          throw new Error(
-            "Erreur lors de la vérification de l'email de l'utilisateur",
-          );
-      }
-
       const tokens = await this.generateTokens(user.id);
 
-      const userData = this.userService.getUser(user.id);
+      const userData = await this.userService.getUser(user.id);
 
       return successResponse('Connexion réussie', 201, {
         ...tokens.data,
-        user: userData,
+        user: userData.data,
       });
     } catch (error) {
       errorResponse(error);
@@ -184,6 +173,42 @@ export class AuthService {
       );
     } catch (error) {
       errorResponse(error);
+    }
+  }
+
+  async changePassword(dto: ChangePasswordDto, id: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id, email: dto.email },
+      });
+      if (!user) throw new NotFoundException('User not found');
+
+      if (await bcrypt.compare(dto.currentPassword, user.password))
+        throw new ForbiddenException('Current password is not correct');
+
+      const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+      if (!user.isEmailVerified) {
+        const userVerified = await this.prisma.user.update({
+          where: { email: user.email },
+          data: { password: hashedPassword, isEmailVerified: true },
+        });
+
+        if (!userVerified)
+          throw new Error(
+            "Erreur lors de la vérification de l'email de l'utilisateur",
+          );
+
+        const tokens = await this.generateTokens(user.id);
+
+        const userData = await this.userService.getUser(user.id);
+
+        return successResponse('🟢 Votre compte est opérationnel', 200, {
+          ...tokens,
+          user: userData.data,
+        });
+      }
+    } catch (error) {
+      return errorResponse(error);
     }
   }
 

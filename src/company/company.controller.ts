@@ -14,9 +14,9 @@ import { AuthUser } from 'src/auth/decorators/auth-user.decorator';
 import { S3Service } from 'src/aws/s3.service';
 import { JwtUser } from 'src/common/types/user.type';
 import {
-  CreateCompanyStepCompanyDto,
   CreateCompanyStepContactDto,
   CreateCompanyStepEmailVerificationDto,
+  CreateCompanyStepInitDto,
   CreateCompanyStepLocationDto,
 } from './company.dto';
 import { CompanyService } from './company.service';
@@ -34,10 +34,10 @@ export class CompanyController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Créer une compagnie step',
-    type: CreateCompanyStepCompanyDto,
+    type: CreateCompanyStepInitDto,
   })
   async createStepCompany(
-    @Body() dto: CreateCompanyStepCompanyDto,
+    @Body() dto: CreateCompanyStepInitDto,
     @UploadedFile() logo: Express.Multer.File,
     @AuthUser() user: JwtUser,
   ) {

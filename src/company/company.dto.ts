@@ -1,18 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
 
-export class CreateCompanyStepCompanyDto {
+export class CreateCompanyStepInitDto {
   @ApiProperty({ example: 'Magnetik Inc.' })
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'Une agence de marketing digital innovante.' })
-  @IsString()
-  description: string;
-
-  @ApiProperty({ example: 'Marketing Digital' })
+  @ApiProperty({ example: 'Cacao' })
   @IsString()
   sector: string;
+
+  @ApiProperty({ example: 'Compagnie de production du cacao.' })
+  @IsString()
+  description: string;
 }
 
 export class CreateCompanyStepLocationDto {
