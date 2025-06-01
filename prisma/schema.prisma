@@ -16,7 +16,7 @@ datasource db {
 
 enum UserRole {
   DEVELOPER
-  OWNER
+  user
   PDG
   DG
   ADG
@@ -55,11 +55,14 @@ model User {
   refreshToken               String?
   status                     UserStatus @default(REGISTERED)
 
-  Company                    Company?
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
 }
 
 enum CompanyStatus {
-  PENDING_APPROVAL
+  BUILDING
+  PENDING
+  UNACTIVE
   ACTIVE
   BLOCKED
   REJECTED
@@ -88,11 +91,10 @@ model Company {
   emailVerificationExpires   DateTime?
 
   bucketName                 String?     // Nom du bucket AWS S3
-  status                     CompanyStatus @default(PENDING_APPROVAL)
+  status                     CompanyStatus @default(BUILDING)
   onboardingSteps            Int[]       // ex: [1, 2, 3]
   createdAt                  DateTime    @default(now())
 
-  ownerId                    String @unique
-  owner                      User        @relation(fields: [ownerId], references: [id])
+  User User[]
 }
 

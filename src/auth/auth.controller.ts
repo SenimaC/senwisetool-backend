@@ -8,11 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import {
-  JwtUser,
-  UserRegisterSource,
-  UserRole,
-} from 'src/common/types/user.type';
+import { UserRegisterSource, UserRole } from 'src/common/types/user.type';
 import {
   ChangePasswordDto,
   LoginDto,
@@ -80,7 +76,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
-  changePassword(@Body() dto: ChangePasswordDto, @AuthUser() user: JwtUser) {
+  changePassword(@Body() dto: ChangePasswordDto, @AuthUser() user) {
     return this.authService.changePassword(dto, user.id);
   }
 
@@ -91,7 +87,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  logout(@AuthUser() user: JwtUser) {
+  logout(@AuthUser() user) {
     return this.authService.logout(user.id);
   }
 }

@@ -28,6 +28,11 @@ export class RegisterDto {
   @IsEnum(UserRole)
   role?: UserRole;
 
+  @ApiProperty({ example: '152fie885e9u' })
+  @IsOptional()
+  @IsString()
+  companyId?: string;
+
   @ApiPropertyOptional({
     example: UserRegisterSource.PUBLIC,
     enum: UserRegisterSource,

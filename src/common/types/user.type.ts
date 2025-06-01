@@ -7,6 +7,14 @@ export enum UserRole {
   ASSISTANT = 'ASSISTANT',
 }
 
+export enum UserStatus {
+  REGISTERED = 'REGISTERED',
+  ACTIVE = 'ACTIVE',
+  DISABLED = 'DISABLED',
+  DELETED = 'DELETED',
+  BANNED = 'BANNED',
+}
+
 export enum UserRegisterSource {
   SCRIPT = 'SCRIPT',
   PUBLIC = 'PUBLIC',
@@ -20,16 +28,19 @@ export enum AccountRole {
   TRAINER = 'TRAINER',
 }
 
-export interface JwtUser {
+export interface CurrentUser {
   id: string;
   email: string;
+  role: UserRole;
 }
 
 export type UserResponse = {
   id: string;
+  email: string;
+  isEmailVerified: boolean;
+  status: UserStatus;
+  createdAt: Date;
   firstName: string;
   lastName: string;
-  email: string;
-  role: string;
-  isEmailVerified: boolean;
+  role: UserRole;
 };

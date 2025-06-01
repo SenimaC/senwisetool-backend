@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -16,6 +18,9 @@ import {
   generateSecurePassword,
 } from 'src/common/helpers/string-generator';
 import { ApiResponse } from 'src/common/types/api-response.type';
+import { EmailVerificationContext } from 'src/common/types/mail';
+import { UserResponse } from 'src/common/types/user.type';
+import { CompanyService } from 'src/company/company.service';
 import { MailService } from 'src/mail/mail.service';
 import {
   LoginDto,
@@ -30,14 +35,17 @@ import { ChangePasswordDto } from './../user/user.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
     private readonly userService: UserService,
-    private mailService: MailService,
-    private jwt: JwtService,
+    private readonly mailService: MailService,
+    @Inject(forwardRef(() => CompanyService)) // ✅ Important
+    private readonly companyService: CompanyService,
   ) {}
 
   async register(dto: RegisterDto): Promise<ApiResponse<any>> {
+    const { companyId, ...safeDto } = dto;
+
     try {
       const existingUser = await this.prisma.user.findUnique({
         where: { email: dto.email },
@@ -49,16 +57,31 @@ export class AuthService {
 
       const hashedPassword = await this.sendUserCredential(dto.email);
 
-      await this.prisma.user.create({
-        data: {
-          ...dto,
-          password: hashedPassword,
-        },
+      const existCompany = await this.prisma.company.findUnique({
+        where: { id: companyId },
       });
+
+      const newUser = existCompany
+        ? await this.prisma.user.create({
+            data: {
+              ...safeDto,
+              password: hashedPassword,
+              company: {
+                connect: { id: existCompany.id }, // 🔗 relier à la compagnie existante
+              },
+            },
+          })
+        : await this.prisma.user.create({
+            data: {
+              ...dto,
+              password: hashedPassword,
+            },
+          });
 
       return successResponse(
         'Compte créé avec succès. Les informations de connexion ont été envoyées à votre adresse email.',
         201,
+        newUser as UserResponse,
       );
     } catch (error) {
       return errorResponse(error);
@@ -77,9 +100,16 @@ export class AuthService {
 
       const userData = await this.userService.getUser(user.id);
 
+      const companyId = await this.companyService.hasCompany(user.id);
+
+      const company = companyId
+        ? await this.companyService.getCompany(companyId)
+        : null;
+
       return successResponse('Connexion réussie', 201, {
         ...tokens.data,
         user: userData.data,
+        company,
       });
     } catch (error) {
       errorResponse(error);
@@ -107,7 +137,11 @@ export class AuthService {
       if (!user) throw new NotFoundException('Utilisateur introuvable');
 
       const code = generate6DigitCode;
-      await this.mailService.sendEmailVerificationCode(dto.email, code);
+      await this.mailService.sendEmailVerificationCode(
+        dto.email,
+        code,
+        EmailVerificationContext.USER,
+      );
 
       await this.prisma.user.update({
         where: { email: dto.email },
