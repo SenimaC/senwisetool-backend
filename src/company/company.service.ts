@@ -288,10 +288,10 @@ export class CompanyService {
   hasCompany = async (userId: string): Promise<string | null> => {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { companyId: true },
+      select: { company: { select: { id: true } } },
     });
 
-    return user?.companyId ?? null;
+    return user.company.id ?? null;
   };
 
   async getCompany(companyId: string) {

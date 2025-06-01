@@ -39,24 +39,24 @@ enum UserStatus {
 }
 
 model User {
-  id                         String   @id @default(cuid())
-  email                      String   @unique
-  password                   String
-  firstName                  String
-  lastName                   String
-  role                       UserRole @default(DG)
-  createdAt                  DateTime @default(now())
-  isEmailVerified            Boolean  @default(false)
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String
+  firstName       String
+  lastName        String
+  role            UserRole @default(DG)
+  createdAt       DateTime @default(now())
+  isEmailVerified Boolean  @default(false)
 
-  codeVerificationProcess    Boolean     @default(false)
-  codeVerification           String?
-  codeVerificationExpires    DateTime?
+  codeVerificationProcess Boolean   @default(false)
+  codeVerification        String?
+  codeVerificationExpires DateTime?
 
-  refreshToken               String?
-  status                     UserStatus @default(REGISTERED)
+  refreshToken String?
+  status       UserStatus @default(REGISTERED)
 
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 }
 
 enum CompanyStatus {
@@ -71,30 +71,29 @@ enum CompanyStatus {
 }
 
 model Company {
-  id                         String    @id @default(cuid())
-  name                       String
-  description                String
-  sector                     String
-  logo                       String     // URL vers S3
-  authorization              String     // URL vers S3
+  id            String @id @default(cuid())
+  name          String
+  description   String
+  sector        String
+  logo          String // URL vers S3
+  authorization String // URL vers S3
 
-  country                    String?
-  region                     String?
-  city                       String?
-  address                    String?
+  country String?
+  region  String?
+  city    String?
+  address String?
 
-  email                      String?      @unique
-  phoneNumber                String?
+  email       String? @unique
+  phoneNumber String?
 
-  isEmailVerified            Boolean     @default(false)
-  emailVerificationCode      String?
-  emailVerificationExpires   DateTime?
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationCode    String?
+  emailVerificationExpires DateTime?
 
-  bucketName                 String?     // Nom du bucket AWS S3
-  status                     CompanyStatus @default(BUILDING)
-  onboardingSteps            Int[]       // ex: [1, 2, 3]
-  createdAt                  DateTime    @default(now())
+  bucketName      String? // Nom du bucket AWS S3
+  status          CompanyStatus @default(BUILDING)
+  onboardingSteps Int[] // ex: [1, 2, 3]
+  createdAt       DateTime      @default(now())
 
   User User[]
 }
-

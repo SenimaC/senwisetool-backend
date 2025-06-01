@@ -66,9 +66,7 @@ export class AuthService {
             data: {
               ...safeDto,
               password: hashedPassword,
-              company: {
-                connect: { id: existCompany.id }, // 🔗 relier à la compagnie existante
-              },
+              companyId: existCompany.id,
             },
           })
         : await this.prisma.user.create({
