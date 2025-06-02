@@ -66,7 +66,7 @@ export class AuthService {
             data: {
               ...safeDto,
               password: hashedPassword,
-              company: {
+              Company: {
                 connect: { id: existCompany.id },
               },
             },

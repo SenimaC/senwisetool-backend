@@ -56,7 +56,7 @@ model User {
   status       UserStatus @default(REGISTERED)
 
   companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
+  Company   Company? @relation(fields: [companyId], references: [id])
 }
 
 enum CompanyStatus {
