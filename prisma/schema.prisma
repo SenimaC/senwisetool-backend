@@ -16,7 +16,7 @@ datasource db {
 
 enum UserRole {
   DEVELOPER
-  user
+  OWNER
   PDG
   DG
   ADG

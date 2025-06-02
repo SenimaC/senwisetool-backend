@@ -4,13 +4,14 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { CompanyStatus } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import {
   errorResponse,
   successResponse,
 } from 'src/common/helpers/api-response.helper';
 import { generate6DigitCode } from 'src/common/helpers/string-generator';
-import { CompanyResponse, CompanyStatus } from 'src/common/types/company.type';
+import { CompanyResponse } from 'src/common/types/company.type';
 import { EmailVerificationContext } from 'src/common/types/mail';
 import { UserRole } from 'src/common/types/user.type';
 import { MailService } from 'src/mail/mail.service';
@@ -276,7 +277,7 @@ export class CompanyService {
       await this.mailService.sendMessage(dto.compagnyEmailUser, dto.comment);
       await this.prisma.company.update({
         where: { id: dto.companyId },
-        data: { status: CompanyStatus.PENDING },
+        data: { status: CompanyStatus.REJECTED },
       });
 
       return successResponse('Demande de rejet effectuée', 201);
