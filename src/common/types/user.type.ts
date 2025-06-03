@@ -15,11 +15,11 @@ export enum UserStatus {
   BANNED = 'BANNED',
 }
 
-export enum UserRegisterSource {
-  SCRIPT = 'SCRIPT',
-  PUBLIC = 'PUBLIC',
-  DEVELOPER = 'DEVELOPER',
-}
+// export enum UserRegisterSource {
+//   SCRIPT = 'SCRIPT',
+//   PUBLIC = 'PUBLIC',
+//   DEVELOPER = 'DEVELOPER',
+// }
 
 export enum AccountRole {
   ADG = 'ADG',

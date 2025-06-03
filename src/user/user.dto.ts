@@ -8,9 +8,22 @@ import {
   Length,
   MinLength,
 } from 'class-validator';
-import { UserRegisterSource } from 'src/common/types/user.type';
 
 export class RegisterDto {
+  @ApiProperty({ example: 'Jean' })
+  @IsString()
+  firstName: string;
+
+  @ApiProperty({ example: 'Dupont' })
+  @IsString()
+  lastName: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+}
+
+export class RegisterWithScriptDto {
   @ApiProperty({ example: 'Jean' })
   @IsString()
   firstName: string;
@@ -27,21 +40,24 @@ export class RegisterDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+}
+
+export class RegisterPDGDto {
+  @ApiProperty({ example: 'Jean' })
+  @IsString()
+  firstName: string;
+
+  @ApiProperty({ example: 'Dupont' })
+  @IsString()
+  lastName: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
 
   @ApiProperty({ example: '152fie885e9u' })
-  @IsOptional()
   @IsString()
-  companyId?: string;
-
-  @ApiPropertyOptional({
-    example: UserRegisterSource.PUBLIC,
-    enum: UserRegisterSource,
-  })
-  @IsOptional()
-  @IsEnum(UserRegisterSource, {
-    message: 'source must be one of SCRIPT, PUBLIC, or DEVELOPER',
-  })
-  source?: UserRegisterSource = UserRegisterSource.PUBLIC;
+  companyId: string;
 }
 
 export class LoginDto {

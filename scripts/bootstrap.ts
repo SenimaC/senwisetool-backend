@@ -2,7 +2,6 @@ import { execSync, spawn } from 'child_process';
 import { config } from 'dotenv';
 // import http from 'http';
 import * as http from 'http';
-import { UserRegisterSource } from 'src/common/types/user.type';
 
 config(); // Charge les variables du .env
 const serverProcess: ReturnType<typeof spawn> | null = null;
@@ -27,6 +26,7 @@ function startServer() {
     // Attendre un peu pour lui laisser le temps de démarrer (ou appeler waitForAppReady ensuite)
     serverProcess.on('error', reject);
     setTimeout(resolve, 3000);
+    console.log('🟢 Serveur démarré');
   });
 }
 
@@ -62,6 +62,7 @@ async function waitForAppReady(url: string, retries = 15, delay = 2000) {
         req.on('error', (err) => reject(err.message));
       });
 
+      console.log('🟢 Connexion établie');
       return;
     } catch (err) {
       console.log(`🕐 Tentative ${i + 1} échouée : ${err}`);
@@ -84,16 +85,15 @@ async function registerDefaultUser() {
 
   const data = JSON.stringify({
     email,
-    // password,
     firstName,
     lastName,
     role,
-    source: UserRegisterSource.SCRIPT,
   });
 
   const hostname = process.env.BOOTSTRAP_HOSTNAME || 'localhost';
   const port = parseInt(process.env.BOOTSTRAP_PORT || '5000', 10);
-  const path = process.env.BOOTSTRAP_REGISTER_PATH || '/auth/register';
+  const path =
+    process.env.BOOTSTRAP_REGISTER_PATH || '/auth/register-with-script';
 
   const options = {
     hostname,
@@ -115,6 +115,7 @@ async function registerDefaultUser() {
         console.log(responseBody);
         resolve();
       });
+      console.log('🟢 Utilisateur créé');
     });
 
     req.on('error', (e) => {
@@ -138,25 +139,20 @@ async function bootstrap(mode: 'init' | 'reset') {
       } else if (mode === 'reset') {
         runCommand('npx prisma migrate reset --force');
       }
-      const readyUrl = `http://${process.env.BOOTSTRAP_HOSTNAME}:${process.env.BOOTSTRAP_PORT}`;
-
-      await startServer();
-      console.log('🟢 Serveur démarré');
-
-      await waitForAppReady(readyUrl);
-      console.log('🟢 Connexion établie');
-
-      await registerDefaultUser();
-      console.log('🟢 Utilisateur créé');
-
-      stopServer();
-      console.log('✅ Process complet 🎉🎉🎉');
     } else {
-      throw 'Cette fonctionnalité est disponible uniquement en developpement';
+      runCommand('npx prisma migrate deploy');
     }
+
+    const readyUrl = `http://${process.env.BOOTSTRAP_HOSTNAME}:${process.env.BOOTSTRAP_PORT}`;
+
+    await startServer();
+    await waitForAppReady(readyUrl);
+    await registerDefaultUser();
+
+    stopServer();
+    console.log('✅ Process complet 🎉🎉🎉');
   } catch (error) {
     console.error('❌ Erreur lors du bootstrap :', error);
-
     if (serverProcess) stopServer(); // on le tue même en cas d’erreur
     process.exit(1);
   }

@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('DEVELOPER', 'user', 'PDG', 'DG', 'ADG', 'ASSISTANT');
+CREATE TYPE "UserRole" AS ENUM ('DEVELOPER', 'OWNER', 'PDG', 'DG', 'ADG', 'ASSISTANT');
 
 -- CreateEnum
 CREATE TYPE "AssistantRole" AS ENUM ('MENDATAIRE', 'AGENT', 'INSPECTOR', 'TRAINER');

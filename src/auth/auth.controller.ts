@@ -1,19 +1,19 @@
 import {
   Body,
   Controller,
-  ForbiddenException,
   Post,
   Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import { UserRegisterSource, UserRole } from 'src/common/types/user.type';
+import { UserRole } from 'src/common/types/user.type';
 import {
   ChangePasswordDto,
   LoginDto,
   RefreshTokenDto,
   RegisterDto,
+  RegisterWithScriptDto,
   resendEmailVerificationDto,
   VerifyEmailDto,
 } from 'src/user/user.dto';
@@ -27,32 +27,27 @@ export class AuthController {
 
   @Post('register')
   @ApiBody({
-    description: 'Creation of user account',
+    description: 'Creation of default user account',
     type: RegisterDto,
   })
-  register(@Body() dto: RegisterDto, @Req() req: Request) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { source, role, ...rest } = dto;
-    switch (dto.source) {
-      case UserRegisterSource.SCRIPT:
-        // Authentifier via un header secret
-        const secret = req.headers['x-internal-secret'];
-        if (secret !== process.env.JWT_SECRET)
-          throw new UnauthorizedException('Accès refusé.');
+  register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
 
-        return this.authService.register({ ...rest, role });
+  @Post('register-with-script')
+  @ApiBody({
+    description: 'Creation of user account from script',
+    type: RegisterDto,
+  })
+  registerWithScript(@Body() dto: RegisterWithScriptDto, @Req() req: Request) {
+    // Authentifier via un header secret
+    const secret = req.headers['x-internal-secret'];
+    if (secret !== process.env.JWT_SECRET)
+      throw new UnauthorizedException('Accès refusé.');
 
-      case UserRegisterSource.DEVELOPER:
-        const user = req['user'];
-        if (!user || user.role !== 'DEVELOPER')
-          throw new ForbiddenException(
-            'Seuls les développeurs peuvent effectuer cette action.',
-          );
-
-        return this.authService.register({ ...rest, role });
-      default:
-        return this.authService.register({ ...rest, role: UserRole.DG });
-    }
+    const { role, ...rest } = dto;
+    const userRole = role ?? UserRole.DG;
+    return this.authService.register(rest, userRole);
   }
 
   @Post('login')

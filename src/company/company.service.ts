@@ -246,12 +246,22 @@ export class CompanyService {
         throw new Error('Compagnie introuvable.');
       }
 
-      const newUser = await this.authService.register({
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        email: dto.validationEmail,
-        role: UserRole.PDG,
-        companyId: dto.companyId,
+      const newUser = await this.authService.register(
+        {
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          email: dto.validationEmail,
+        },
+        UserRole.PDG,
+      );
+
+      await this.prisma.user.update({
+        where: { id: newUser.data.id },
+        data: {
+          Company: {
+            connect: { id: company.id },
+          },
+        },
       });
 
       return successResponse(

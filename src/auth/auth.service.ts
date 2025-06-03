@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import {
   errorResponse,
@@ -43,9 +44,7 @@ export class AuthService {
     private readonly companyService: CompanyService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<ApiResponse<any>> {
-    const { companyId, ...safeDto } = dto;
-
+  async register(dto: RegisterDto, role?: UserRole): Promise<ApiResponse<any>> {
     try {
       const existingUser = await this.prisma.user.findUnique({
         where: { email: dto.email },
@@ -57,18 +56,12 @@ export class AuthService {
 
       const hashedPassword = await this.sendUserCredential(dto.email);
 
-      const existCompany = await this.prisma.company.findUnique({
-        where: { id: companyId },
-      });
-
-      const newUser = existCompany
+      const newUser = role
         ? await this.prisma.user.create({
             data: {
-              ...safeDto,
+              ...dto,
               password: hashedPassword,
-              Company: {
-                connect: { id: existCompany.id },
-              },
+              role,
             },
           })
         : await this.prisma.user.create({
@@ -88,7 +81,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<ApiResponse<any>> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email: dto.email },
