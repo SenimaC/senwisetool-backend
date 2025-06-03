@@ -12,15 +12,12 @@ import { ApiResponse } from 'src/common/types/api-response.type';
 export class ApiResponseInterceptor<T>
   implements NestInterceptor<T, ApiResponse<T>>
 {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<ApiResponse<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
 
     return next.handle().pipe(
       map((data: any) => ({
-        ...(data?.data ?? data),
+        ...data,
         timestamp: new Date().toISOString(),
         path: request.url,
       })),

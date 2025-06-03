@@ -6,10 +6,10 @@ export function successResponse<T>(
   data?: T,
 ): ApiResponse<T> {
   return {
-    data,
     statusCode,
     message,
     success: true,
+    data,
     timestamp: new Date().toISOString(),
   };
 }
@@ -24,11 +24,11 @@ export function errorResponse(
   console.log('message : ', typeof messageOrError);
   if (typeof messageOrError === 'string') {
     return {
-      data: null,
       message: messageOrError,
       statusCode,
       error: errorType || 'InternalServerError',
       success: false,
+      data: null,
       timestamp,
     };
   }

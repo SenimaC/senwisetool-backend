@@ -7,6 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
+import { ApiResponse } from 'src/common/types/api-response.type';
 import { UserRole } from 'src/common/types/user.type';
 import {
   ChangePasswordDto,
@@ -30,7 +31,7 @@ export class AuthController {
     description: 'Creation of default user account',
     type: RegisterDto,
   })
-  register(@Body() dto: RegisterDto) {
+  register(@Body() dto: RegisterDto): Promise<ApiResponse<any>> {
     return this.authService.register(dto);
   }
 
@@ -39,7 +40,10 @@ export class AuthController {
     description: 'Creation of user account from script',
     type: RegisterDto,
   })
-  registerWithScript(@Body() dto: RegisterWithScriptDto, @Req() req: Request) {
+  registerWithScript(
+    @Body() dto: RegisterWithScriptDto,
+    @Req() req: Request,
+  ): Promise<ApiResponse<any>> {
     // Authentifier via un header secret
     const secret = req.headers['x-internal-secret'];
     if (secret !== process.env.JWT_SECRET)
