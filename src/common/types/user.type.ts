@@ -43,4 +43,5 @@ export type UserResponse = {
   firstName: string;
   lastName: string;
   role: UserRole;
+  companyId: string | null;
 };

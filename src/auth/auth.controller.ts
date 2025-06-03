@@ -59,7 +59,7 @@ export class AuthController {
     description: 'Connexion at an account',
     type: LoginDto,
   })
-  login(@Body() dto: LoginDto) {
+  login(@Body() dto: LoginDto): Promise<ApiResponse<any>> {
     return this.authService.login(dto);
   }
 

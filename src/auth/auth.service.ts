@@ -93,7 +93,7 @@ export class AuthService {
 
       const userData = await this.userService.getUser(user.id);
 
-      const companyId = await this.companyService.hasCompany(user.id);
+      const companyId = userData.data.companyId;
 
       const company = companyId
         ? await this.companyService.getCompany(companyId)
@@ -105,7 +105,7 @@ export class AuthService {
         company,
       });
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
