@@ -1,17 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import { spawn } from 'child_process';
 import { config } from 'dotenv';
-import fs from 'fs';
 import * as http from 'http';
-import path from 'path';
 import { RegisterWithScriptDto } from 'src/user/user.dto';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
 
 config(); // Charge les variables du .env
 const serverProcess: ReturnType<typeof spawn> | null = null;
-
-const prisma = new PrismaClient();
 
 function stopServer() {
   if (serverProcess && serverProcess.pid) {
@@ -22,22 +15,6 @@ function stopServer() {
       console.error('⚠️ Impossible de tuer le serveur lancé :', err);
     }
   }
-}
-
-function getArgv() {
-  return (
-    yargs(hideBin(process.argv))
-      .options({
-        file: { type: 'string', describe: 'Fichier JSON', demandOption: false },
-        email: { type: 'string', describe: 'Email', demandOption: false },
-        firstName: { type: 'string', describe: 'Prénom', demandOption: false },
-        lastName: { type: 'string', describe: 'Nom', demandOption: false },
-        role: { type: 'string', describe: 'Rôle', demandOption: false },
-      })
-      // .strict()
-      .help()
-      .parseSync()
-  ); // 👈 version synchronisée, typée
 }
 
 export async function createUser(dto: RegisterWithScriptDto) {
@@ -91,40 +68,3 @@ export async function createUser(dto: RegisterWithScriptDto) {
     stopServer();
   });
 }
-
-async function main() {
-  const argv = getArgv();
-  console.log(argv);
-
-  if (argv.file) {
-    console.log(argv.file);
-    const filePath = path.resolve(process.cwd(), argv.file); // <-- chemin absolu
-
-    const rawData = fs.readFileSync(filePath, 'utf-8');
-    // 📂 Mode fichier
-    // const raw = fs.readFileSync(argv.file, 'utf-8');
-    const users = JSON.parse(rawData) as RegisterWithScriptDto[];
-
-    for (const user of users) {
-      await createUser(user);
-      console.log(`✅ Utilisateur créé : ${user.email}`);
-    }
-  } else if (argv.email && argv.firstName && argv.lastName) {
-    // 📦 Mode individuel
-    await createUser(argv as RegisterWithScriptDto);
-    console.log(`✅ Utilisateur créé : ${argv.email}`);
-  } else {
-    console.error(
-      '❌ Veuillez soit spécifier --file=chemin.json, soit fournir --email, --password, --firstName, --lastName',
-    );
-    process.exit(1);
-  }
-
-  await prisma.$disconnect();
-}
-
-main().catch((err) => {
-  console.error('❌ Erreur :', err);
-  prisma.$disconnect();
-  process.exit(1);
-});

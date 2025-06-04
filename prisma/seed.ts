@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { createUser } from '../src/common/utils/create-user.script';
 
 const prisma = new PrismaClient();
 
@@ -46,8 +47,16 @@ async function main() {
     });
   }
 
+  // 👤 Création de l'utilisateur développeur
+  createUser({
+    email: 'jlove.livestyle@gmail.com',
+    firstName: 'Jean',
+    lastName: 'Love',
+    role: 'DEVELOPER',
+  });
+
   console.log(
-    '✅ Seed terminé avec rôles, permissions utilisateurs, société et développeur',
+    '✅ Seed terminé avec rôles, permissions utilisateurs et compte développeur',
   );
 }
 
