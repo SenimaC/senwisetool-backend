@@ -4,7 +4,6 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -197,6 +196,7 @@ export class AuthService {
       });
       return successResponse(
         `vos informations de connexions ont été envoyées sur ${dto.email}`,
+        201,
       );
     } catch (error) {
       errorResponse(error);
@@ -240,32 +240,32 @@ export class AuthService {
   }
 
   async generateTokens(userId: string) {
-    const payload = { sub: userId };
-    const [access_token, refresh_token] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_SECRET,
-        expiresIn: '5m',
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_REFRESH_SECRET,
-        expiresIn: '1d',
-      }),
-    ]);
+    try {
+      const payload = { sub: userId };
+      const [access_token, refresh_token] = await Promise.all([
+        this.jwtService.signAsync(payload, {
+          secret: process.env.JWT_SECRET,
+          expiresIn: '5m',
+        }),
+        this.jwtService.signAsync(payload, {
+          secret: process.env.JWT_REFRESH_SECRET,
+          expiresIn: '1d',
+        }),
+      ]);
 
-    const hash = await bcrypt.hash(refresh_token, 10);
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: hash },
-    });
+      const hash = await bcrypt.hash(refresh_token, 10);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { refreshToken: hash },
+      });
 
-    const apiResponse = {
-      message: 'Tokens générés avec succes',
-      statusCode: 201,
-      data: { access_token, refresh_token },
-    };
-
-    Logger.log(`tokens générés : ${apiResponse}`);
-    return apiResponse;
+      return successResponse('Tokens générés avec succes', 201, {
+        access_token,
+        refresh_token,
+      });
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   async refreshTokens(refreshToken: string) {
@@ -283,13 +283,11 @@ export class AuthService {
       const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
       if (!rtMatches) throw new ForbiddenException('Token invalide');
 
-      const apiResponse = await this.generateTokens(user.id);
+      const { message, statusCode, data } = await this.generateTokens(user.id);
 
-      return apiResponse;
+      return successResponse(message, statusCode, data);
     } catch (error) {
-      const errorMessage = `Token invalide ou expiré : ${error}`;
-      Logger.error(errorMessage);
-      throw new ForbiddenException(errorMessage);
+      return errorResponse(error);
     }
   }
 
@@ -316,42 +314,37 @@ export class AuthService {
 
     await this.mailService.sendResetPasswordEmail(user.email, resetLink);
 
-    const apiResponse = {
-      message: 'Lien de reinitialisation envoyé à votre adresse email',
-      statusCode: 201,
-      data: { resetLink },
-    };
-
-    Logger.log(apiResponse);
-    return apiResponse;
+    return successResponse(
+      'Lien de reinitialisation envoyé à votre adresse email',
+      201,
+      { resetLink },
+    );
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const user = await this.prisma.user.findFirst({
-      where: { refreshToken: token },
-    });
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { refreshToken: token },
+      });
 
-    if (!user) {
-      throw new ForbiddenException('Token invalide');
+      if (!user) {
+        throw new ForbiddenException('Token invalide');
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          refreshToken: null, // Invalider le token après usage
+        },
+      });
+
+      return successResponse('Mot de passe reinitialisé avec succès', 201);
+    } catch (error) {
+      return errorResponse(error);
     }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        refreshToken: null, // Invalider le token après usage
-      },
-    });
-
-    const apiResponse = {
-      message: 'Mot de passe reinitialisé avec succès',
-      statusCode: 201,
-    };
-
-    Logger.log(apiResponse);
-    return apiResponse;
   }
 
   async logout(userId: string) {
