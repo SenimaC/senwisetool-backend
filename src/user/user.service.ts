@@ -11,8 +11,8 @@ import { UpdateUserDto } from './user.dto';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  findAll() {
-    const users = this.prisma.user.findMany();
+  async findAll() {
+    const users = await this.prisma.user.findMany();
     return successResponse('Liste des utilisateurs', 200, users);
   }
 
