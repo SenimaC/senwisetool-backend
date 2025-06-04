@@ -12,7 +12,8 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   findAll() {
-    return this.prisma.user.findMany();
+    const users = this.prisma.user.findMany();
+    return successResponse('Liste des utilisateurs', 200, users);
   }
 
   async getUser(id: string) {
