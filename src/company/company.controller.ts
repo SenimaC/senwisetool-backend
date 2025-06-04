@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   UnauthorizedException,
   UploadedFiles,
@@ -12,9 +14,10 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'jwt.guard';
-import { AuthUser } from 'src/auth/decorators/auth-user.decorator';
+import { Company } from '@prisma/client';
+import { AuthGuard } from 'jwt.guard';
 import { S3Service } from 'src/aws/s3.service';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { UserRole } from 'src/common/types/user.type';
 import {
   CreateCompanyStepContactDto,
@@ -33,7 +36,7 @@ export class CompanyController {
     private companyService: CompanyService,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('create')
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -102,7 +105,7 @@ export class CompanyController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('create/location')
   @ApiBody({
     description: 'Ajouter la localisation de la compagnie',
@@ -115,7 +118,7 @@ export class CompanyController {
     return this.companyService.createStepLocation(dto, user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('create/contact')
   @ApiBody({
     description: 'Ajouter les contacts de la compagnie',
@@ -128,7 +131,7 @@ export class CompanyController {
     return this.companyService.createStepContact(dto, user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('create/resend-email-verification')
   @ApiBody({
     description: "Renvoie de l'email de la compagnie",
@@ -137,7 +140,7 @@ export class CompanyController {
     return this.companyService.resendEmailVerification(user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('create/email-verification')
   @ApiBody({
     description: "Verification de l'email de la compagnie",
@@ -149,7 +152,7 @@ export class CompanyController {
     return this.companyService.createStepEmailVerification(dto, user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('validate-authorization')
   @ApiBody({
     description: "Valider la demande d'autorisation de création la compagnie",
@@ -164,7 +167,7 @@ export class CompanyController {
     return this.companyService.ValidateAutorization(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('rejet-authorization')
   @ApiBody({
     description: "rejeter la demande d'autorisation de création la compagnie",
@@ -181,9 +184,19 @@ export class CompanyController {
 
   // gestion des compagnies *********************
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Get(':id')
   getCompany(@Param('id') id: string) {
     return this.companyService.getCompany(id);
+  }
+
+  @Patch(':id')
+  updateCompany(@Param('id') id: string, @Body() data: Partial<Company>) {
+    return this.companyService.updateCompany(id, data);
+  }
+
+  @Delete(':id')
+  deleteCompany(@Param('id') id: string) {
+    return this.companyService.deleteCompany(id);
   }
 }

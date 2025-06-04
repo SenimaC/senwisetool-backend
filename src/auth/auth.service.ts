@@ -61,13 +61,14 @@ export class AuthService {
             data: {
               ...dto,
               password: hashedPassword,
-              role,
+              roleId: role || UserRole.DG, // Provide a default role if not specified
             },
           })
         : await this.prisma.user.create({
             data: {
               ...dto,
               password: hashedPassword,
+              roleId: role || UserRole.DG, // Provide a default role if not specified
             },
           });
 

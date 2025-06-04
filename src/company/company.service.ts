@@ -4,7 +4,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { CompanyStatus } from '@prisma/client';
+import { Company, CompanyStatus } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import {
   errorResponse,
@@ -309,6 +309,19 @@ export class CompanyService {
     return this.prisma.company.findUnique({
       where: { id: companyId },
       include: { User: true }, // si tu veux inclure les utilisateurs liés
+    });
+  }
+
+  async updateCompany(id: string, data: Partial<Company>) {
+    return this.prisma.company.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteCompany(id: string) {
+    return this.prisma.company.delete({
+      where: { id },
     });
   }
 }
