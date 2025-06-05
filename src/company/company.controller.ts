@@ -18,6 +18,8 @@ import { Company } from '@prisma/client';
 import { AuthGuard } from 'jwt.guard';
 import { S3Service } from 'src/aws/s3.service';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { Permissions } from 'src/common/decorators/permissions.decorator';
+import { PermissionsGuard } from 'src/common/guards/Permissions.guard';
 import { UserRole } from 'src/common/types/user.type';
 import {
   CreateCompanyStepContactDto,
@@ -29,6 +31,7 @@ import {
 } from './company.dto';
 import { CompanyService } from './company.service';
 
+@UseGuards(AuthGuard, PermissionsGuard)
 @Controller('company')
 export class CompanyController {
   constructor(
@@ -36,8 +39,9 @@ export class CompanyController {
     private companyService: CompanyService,
   ) {}
 
-  @UseGuards(AuthGuard)
+  // @UseGuards(AuthGuard)
   @Post('create')
+  @Permissions('CREATE_COMPANY')
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'logo', maxCount: 1 },
@@ -69,8 +73,8 @@ export class CompanyController {
       throw new BadRequestException('Le logo doit être une image valide.');
     }
 
-    if (logo.size > 1 * 1024 * 1024) {
-      throw new BadRequestException('Le logo ne doit pas dépasser 1MB.');
+    if (logo.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('Le logo ne doit pas dépasser 5MB.');
     }
 
     // Validation du document d'autorisation

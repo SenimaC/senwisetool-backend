@@ -44,7 +44,7 @@ export class AuthService {
     private readonly companyService: CompanyService,
   ) {}
 
-  async register(dto: RegisterDto, role?: UserRole): Promise<ApiResponse<any>> {
+  async register(dto: RegisterDto, role?: string): Promise<ApiResponse<any>> {
     try {
       const existingUser = await this.prisma.user.findUnique({
         where: { email: dto.email },

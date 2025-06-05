@@ -28,16 +28,16 @@ export class AuthController {
 
   @Post('register')
   @ApiBody({
-    description: 'Creation of default user account',
+    description: 'Creation de compte via un utilisateur',
     type: RegisterDto,
   })
   register(@Body() dto: RegisterDto): Promise<ApiResponse<any>> {
     return this.authService.register(dto);
   }
 
-  @Post('register-with-script')
+  @Post('register-by-owner-or-developer')
   @ApiBody({
-    description: 'Creation of user account from script',
+    description: 'Creation de compte via un owner ou le lead developer',
     type: RegisterDto,
   })
   registerWithScript(

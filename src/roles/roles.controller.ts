@@ -9,24 +9,25 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam } from '@nestjs/swagger';
-import { Roles } from 'src/common/decorators/developer.decorator';
-import { RoleGuard } from 'src/common/guards/roles.guard';
+import { AuthGuard } from 'jwt.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AssignPermissionsDto, CreateRoleDto, UpdateRoleDto } from './role.dto';
 import { RoleService } from './roles.service';
 
 @Controller('roles')
-@UseGuards(RoleGuard)
+@UseGuards(AuthGuard, RolesGuard)
 export class RolesController {
   constructor(private readonly roleService: RoleService) {}
 
-  @Post()
+  @Post('create')
   @Roles('DEVELOPER')
   createRole(@Body() dto: CreateRoleDto) {
     return this.roleService.createRole(dto);
   }
 
   @Get()
-  @Roles('DEVELOPER')
+  @Roles('ADMIN', 'SUPERADMIN') // seuls ces rôles peuvent accéder
   getAllRoles() {
     return this.roleService.getAllRoles();
   }

@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, Length } from 'class-validator';
 
 export class CreateCompanyStepInitDto {
   @ApiProperty({ example: 'Magnetik Inc.' })
@@ -16,25 +16,21 @@ export class CreateCompanyStepInitDto {
 }
 
 export class CreateCompanyStepLocationDto {
-  @ApiPropertyOptional({ example: 'Cameroun' })
-  @IsOptional()
+  @ApiProperty({ example: 'Cameroun' })
   @IsString()
-  country?: string;
+  country: string;
 
-  @ApiPropertyOptional({ example: 'Centre' })
-  @IsOptional()
+  @ApiProperty({ example: 'Centre' })
   @IsString()
-  region?: string;
+  region: string;
 
-  @ApiPropertyOptional({ example: 'Yaoundé' })
-  @IsOptional()
+  @ApiProperty({ example: 'Yaoundé' })
   @IsString()
-  city?: string;
+  city: string;
 
-  @ApiPropertyOptional({ example: 'Rue 204, Bastos' })
-  @IsOptional()
+  @ApiProperty({ example: 'Rue 204, Bastos' })
   @IsString()
-  address?: string;
+  address: string;
 }
 
 export class CreateCompanyStepContactDto {

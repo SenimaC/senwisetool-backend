@@ -1,37 +1,42 @@
+// roles.guard.ts
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { ROLES_KEY } from '../decorators/roles.decorator';
 
 @Injectable()
-export class RoleGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private prisma: PrismaService,
-  ) {}
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRole = this.reflector.get<string>(
-      'role',
-      context.getHandler(),
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
     );
-    if (!requiredRole) return true;
+
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true; // Pas de rôle requis → accès libre
+    }
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    const dbUser = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      include: { Role: true },
-    });
-
-    if (!dbUser || dbUser.Role.name !== requiredRole) {
+    if (!user || !user.Role?.name) {
       throw new UnauthorizedException(
-        "Vous n'avez pas le droit d'accéder à cette ressource.",
+        'Utilisateur non authentifié ou rôle non trouvé',
+      );
+    }
+
+    const userRole = user.Role.name;
+
+    if (!requiredRoles.includes(userRole)) {
+      throw new ForbiddenException(
+        `Accès interdit : rôle "${userRole}" requis`,
       );
     }
 

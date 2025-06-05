@@ -1,48 +1,46 @@
+// src/common/guards/permissions.guard.ts
 import {
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private prisma: PrismaService,
-  ) {}
+  constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredPermissions = this.reflector.get<string[]>(
-      'permissions',
-      context.getHandler(),
+  canActivate(context: ExecutionContext): boolean {
+    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
+      PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()],
     );
-    if (!requiredPermissions) return true;
+
+    if (!requiredPermissions || requiredPermissions.length === 0) {
+      return true; // Pas de permission requise
+    }
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    const userWithPermissions = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        Role: {
-          include: {
-            permissions: true,
-          },
-        },
-      },
-    });
+    if (!user || !user.Role?.permissions) {
+      console.log(user);
 
-    const userPermissions =
-      userWithPermissions?.Role?.permissions.map((p) => p.name) || [];
+      throw new UnauthorizedException(
+        'Accès refusé : pas de permissions trouvées',
+      );
+    }
 
-    const hasAccess = requiredPermissions.every((p) =>
-      userPermissions.includes(p),
+    const userPermissions = user.Role.permissions.map((p) => p.name);
+
+    const hasAllPermissions = requiredPermissions.every((permission) =>
+      userPermissions.includes(permission),
     );
-    if (!hasAccess) {
-      throw new ForbiddenException('Accès refusé : permission manquante.');
+
+    if (!hasAllPermissions) {
+      throw new UnauthorizedException('Accès refusé : permission manquante');
     }
 
     return true;

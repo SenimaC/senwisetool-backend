@@ -1,12 +1,20 @@
-import { PrismaClient } from '@prisma/client';
-import { createUser } from '../src/common/utils/create-user.script';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from '../src/app.module';
+import { AuthService } from '../src/auth/auth.service';
+import { PrismaService } from '../src/prisma/prisma.service';
 
-const prisma = new PrismaClient();
+async function seed() {
+  const app = await NestFactory.createApplicationContext(AppModule);
 
-async function main() {
-  // 🔐 Permissions de gestion des utilisateurs
-  const defaultPermissions = [
+  const prisma = app.get(PrismaService);
+  const authService = app.get(AuthService);
+  const config = app.get(ConfigService);
+
+  // ⚙️ Création des permissions
+  const permissions = [
     'CREATE_OWNER',
+    'CREATE_DEVELOPER',
     'VIEW_USER',
     'UPDATE_USER',
     'DELETE_USER',
@@ -14,32 +22,104 @@ async function main() {
     'MANAGE_USER_STATUS',
     'RESET_USER_PASSWORD',
     'VERIFY_USER_EMAIL',
+    'CREATE_COMPANY',
+    'UPDATE_COMPANY',
+    'DELETE_COMPANY',
+    'VIEW_COMPANY',
+    'MANAGE_COMPANY_STATUS',
+    'MANAGE_COMPANY_AUTHORIZATION',
   ];
 
-  for (const permission of defaultPermissions) {
+  for (const name of permissions) {
     await prisma.permission.upsert({
-      where: { name: permission },
+      where: { name },
       update: {},
-      create: { name: permission },
+      create: { name },
     });
   }
 
   const allPermissions = await prisma.permission.findMany();
 
-  // 🎭 Rôles à créer
-  const defaultRoles = ['DEVELOPER', 'OWNER', 'PDG', 'DG', 'ADG', 'ASSISTANT'];
+  const roles = [
+    'LEAD_DEVELOPER',
+    'DEVELOPER',
+    'OWNER',
+    'PDG',
+    'DG',
+    'ADG',
+    'ASSISTANT',
+  ];
 
-  for (const roleName of defaultRoles) {
-    const permissionsToAssign =
-      roleName === 'ASSISTANT'
-        ? allPermissions.filter((p) => p.name === 'VIEW_USER')
-        : allPermissions;
+  console.log('🌱 Seeding roles...');
+  // Assigner toutes les permissions à certains rôles clés
+  for (const role of roles) {
+    let permissionsToAssign = [];
+
+    switch (role) {
+      case 'LEAD_DEVELOPER':
+        permissionsToAssign = allPermissions;
+        break;
+      case 'DG':
+        permissionsToAssign = allPermissions.filter((p) =>
+          [
+            'RESET_USER_PASSWORD',
+            'VERIFY_USER_EMAIL',
+            'CREATE_COMPANY',
+            'UPDATE_COMPANY',
+            'VIEW_COMPANY',
+          ].includes(p.name),
+        );
+        break;
+
+      case 'DEVELOPER':
+        permissionsToAssign = allPermissions.filter(
+          (p) => !['CREATE_OWNER'].includes(p.name),
+        );
+        break;
+
+      case 'OWNER':
+        permissionsToAssign = allPermissions.filter(
+          (p) => !['CREATE_OWNER', 'CREATE_DEVELOPER'].includes(p.name),
+        );
+        break;
+      case 'PDG':
+        permissionsToAssign = allPermissions.filter((p) =>
+          [
+            'VIEW_USER',
+            'UPDATE_USER',
+            'VIEW_COMPANY',
+            'UPDATE_COMPANY',
+          ].includes(p.name),
+        );
+        break;
+
+      case 'ADG':
+        permissionsToAssign = allPermissions.filter((p) =>
+          [
+            'VIEW_USER',
+            'MANAGE_USER_STATUS',
+            'VIEW_COMPANY',
+            'MANAGE_COMPANY_STATUS',
+          ].includes(p.name),
+        );
+        break;
+
+      case 'ASSISTANT':
+        permissionsToAssign = allPermissions.filter((p) =>
+          ['VIEW_USER', 'VIEW_COMPANY'].includes(p.name),
+        );
+        break;
+
+      default:
+        permissionsToAssign = [];
+        break;
+    }
 
     await prisma.role.upsert({
-      where: { name: roleName },
+      where: { name: role },
       update: {},
       create: {
-        name: roleName,
+        name: role,
         permissions: {
           connect: permissionsToAssign.map((p) => ({ id: p.id })),
         },
@@ -47,22 +127,45 @@ async function main() {
     });
   }
 
-  // 👤 Création de l'utilisateur développeur
-  createUser({
-    email: 'jlove.livestyle@gmail.com',
-    firstName: 'Jean',
-    lastName: 'Love',
-    role: 'DEVELOPER',
+  const devRole = await prisma.role.findUnique({
+    where: { name: 'LEAD_DEVELOPER' },
   });
 
-  console.log(
-    '✅ Seed terminé avec rôles, permissions utilisateurs et compte développeur',
-  );
+  if (!devRole) throw new Error("Rôle 'DEVELOPER' introuvable");
+
+  // 📩 Données de l'utilisateur développeur
+  const email =
+    config.get('DEVELOPER_ACCOUNT_MAIL') || 'jlove.livestyle@gmail.com';
+  const firstName = config.get('DEVELOPER_USER_FIRSTNAME') || 'Jean';
+  const lastName = config.get('DEVELOPER_USER_LASTNAME') || 'Love';
+
+  try {
+    await authService.register(
+      {
+        email,
+        firstName,
+        lastName,
+      },
+      devRole.id,
+    );
+
+    console.log('✅ Utilisateur développeur créé avec succès via AuthService');
+  } catch (error) {
+    console.error(
+      '❌ Erreur pendant la création de l’utilisateur développeur :',
+      error,
+    );
+  }
+
+  await app.close();
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
+seed()
+  .then(() => {
+    console.log('✅ Seed terminé avec succès');
+    process.exit(0);
   })
-  .finally(() => prisma.$disconnect());
+  .catch((err) => {
+    console.error('❌ Erreur dans le seed :', err);
+    process.exit(1);
+  });
