@@ -18,9 +18,9 @@ import {
   resendEmailVerificationDto,
   VerifyEmailDto,
 } from 'src/user/user.dto';
+import { AuthUser } from '../common/decorators/auth-user.decorator';
+import { AuthGuard } from '../common/guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
-import { AuthUser } from './decorators/auth-user.decorator';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -28,16 +28,16 @@ export class AuthController {
 
   @Post('register')
   @ApiBody({
-    description: 'Creation of default user account',
+    description: 'Creation de compte via un utilisateur',
     type: RegisterDto,
   })
   register(@Body() dto: RegisterDto): Promise<ApiResponse<any>> {
     return this.authService.register(dto);
   }
 
-  @Post('register-with-script')
+  @Post('register-by-owner-or-developer')
   @ApiBody({
-    description: 'Creation of user account from script',
+    description: 'Creation de compte via un owner ou le lead developer',
     type: RegisterDto,
   })
   registerWithScript(
@@ -73,7 +73,7 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('change-password')
   changePassword(@Body() dto: ChangePasswordDto, @AuthUser() user) {
     return this.authService.changePassword(dto, user.id);
@@ -84,7 +84,7 @@ export class AuthController {
     return this.authService.refreshTokens(dto.refreshToken);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post('logout')
   logout(@AuthUser() user) {
     return this.authService.logout(user.id);

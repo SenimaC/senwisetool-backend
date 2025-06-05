@@ -40,7 +40,7 @@ function getArgv() {
   ); // 👈 version synchronisée, typée
 }
 
-async function createUser(dto: RegisterWithScriptDto) {
+export async function createUser(dto: RegisterWithScriptDto) {
   console.log("Creation d'un nouvel utilisateur ...");
 
   const data = JSON.stringify({
@@ -88,6 +88,7 @@ async function createUser(dto: RegisterWithScriptDto) {
 
     req.write(data);
     req.end();
+    stopServer();
   });
 }
 
@@ -108,12 +109,10 @@ async function main() {
       await createUser(user);
       console.log(`✅ Utilisateur créé : ${user.email}`);
     }
-    stopServer();
   } else if (argv.email && argv.firstName && argv.lastName) {
     // 📦 Mode individuel
     await createUser(argv as RegisterWithScriptDto);
     console.log(`✅ Utilisateur créé : ${argv.email}`);
-    stopServer();
   } else {
     console.error(
       '❌ Veuillez soit spécifier --file=chemin.json, soit fournir --email, --password, --firstName, --lastName',

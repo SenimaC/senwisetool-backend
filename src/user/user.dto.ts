@@ -36,10 +36,13 @@ export class RegisterWithScriptDto {
   @IsEmail()
   email: string;
 
-  @ApiPropertyOptional({ example: UserRole.DG, enum: UserRole })
+  @ApiPropertyOptional({
+    example: '152fie885e9u',
+    description: 'Id du role',
+  })
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsString()
+  role?: string;
 }
 
 export class RegisterPDGDto {

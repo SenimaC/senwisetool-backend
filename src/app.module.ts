@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { CompanyModule } from './company/company.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RolesModule } from './roles/roles.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { UserModule } from './user/user.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

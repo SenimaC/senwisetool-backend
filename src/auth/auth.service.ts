@@ -43,7 +43,7 @@ export class AuthService {
     private readonly companyService: CompanyService,
   ) {}
 
-  async register(dto: RegisterDto, role?: UserRole): Promise<ApiResponse<any>> {
+  async register(dto: RegisterDto, role?: string): Promise<ApiResponse<any>> {
     try {
       const existingUser = await this.prisma.user.findUnique({
         where: { email: dto.email },
@@ -60,13 +60,14 @@ export class AuthService {
             data: {
               ...dto,
               password: hashedPassword,
-              role,
+              roleId: role || UserRole.DG, // Provide a default role if not specified
             },
           })
         : await this.prisma.user.create({
             data: {
               ...dto,
               password: hashedPassword,
+              roleId: role || UserRole.DG, // Provide a default role if not specified
             },
           });
 

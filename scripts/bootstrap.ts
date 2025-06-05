@@ -1,3 +1,4 @@
+import { UserRole } from '@prisma/client';
 import { execSync } from 'child_process';
 import { config } from 'dotenv';
 
@@ -20,9 +21,15 @@ async function bootstrap(mode: 'init' | 'reset') {
       runCommand('npx prisma migrate deploy');
     }
 
-    runCommand(
-      'yarn swt:add-users --email user@example.com --password secret123 --firstName John --lastName',
-    );
+    if (process.argv[3] && process.argv[3] == '--developer') {
+      const email = 'jlove.livestyle@gmail.com',
+        firstName = 'swt',
+        lastName = 'swt developer',
+        role = UserRole.DEVELOPER;
+      runCommand(
+        `yarn swt:add-users --email ${email} --firstName=${firstName} --lastName=${lastName} --role=${role}`,
+      );
+    }
 
     console.log('✅ Process complet 🎉🎉🎉');
   } catch (error) {

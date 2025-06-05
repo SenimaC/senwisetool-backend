@@ -42,6 +42,5 @@ export type UserResponse = {
   createdAt: Date;
   firstName: string;
   lastName: string;
-  role: UserRole;
   companyId: string | null;
 };
