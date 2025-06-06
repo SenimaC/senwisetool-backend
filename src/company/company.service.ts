@@ -308,22 +308,20 @@ export class CompanyService {
       if (newUser.error) {
         throw new ForbiddenException(newUser);
       }
-      console.log('1111111111111 : ', newUser);
 
       await this.prisma.user.update({
-        where: { id: newUser.data.id },
+        where: { id: newUser.data.data.id },
         data: {
           Company: {
             connect: { id: dto.companyId },
           },
         },
       });
-      console.log('2222222222222');
 
       return successResponse(
         'Autorisation accordée. En attente de la validation du PDG',
         201,
-        newUser.data as UserResponse,
+        newUser.data.data as UserResponse,
       );
     } catch (error) {
       return errorResponse(error);
