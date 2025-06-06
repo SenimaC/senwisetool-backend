@@ -1,7 +1,10 @@
 import { randomUUID } from 'crypto';
 import slugify from 'slugify';
 
-export const generateSecurePassword = (): string => {
+export const generateSecurePassword = (
+  minLength: number = 20,
+  maxLength: number = 50,
+): string => {
   const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lower = 'abcdefghijklmnopqrstuvwxyz';
   const digits = '0123456789';
@@ -9,8 +12,9 @@ export const generateSecurePassword = (): string => {
 
   const all = upper + lower + digits + symbols;
 
-  // Longueur dynamique entre 10 et 20
-  const length = Math.floor(Math.random() * 11) + 10; // 10 à 20
+  // Longueur dynamique entre minLength et maxLength
+  const length =
+    Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
 
   const password = [
     upper[Math.floor(Math.random() * upper.length)],

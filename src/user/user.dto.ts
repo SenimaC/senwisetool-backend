@@ -23,6 +23,20 @@ export class RegisterDto {
   email: string;
 }
 
+export class AuthRegisterDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiPropertyOptional({
+    example: '152fie885e9u',
+    description: 'Id du role',
+  })
+  @IsOptional()
+  @IsString()
+  role?: string;
+}
+
 export class RegisterWithScriptDto {
   @ApiProperty({ example: 'Jean' })
   @IsString()

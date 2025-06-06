@@ -1,20 +1,11 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Req,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 import { ApiResponse } from 'src/common/types/api-response.type';
-import { UserRole } from 'src/common/types/user.type';
 import {
   ChangePasswordDto,
   LoginDto,
   RefreshTokenDto,
   RegisterDto,
-  RegisterWithScriptDto,
   resendEmailVerificationDto,
   VerifyEmailDto,
 } from 'src/user/user.dto';
@@ -35,24 +26,34 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
-  @Post('register-by-owner-or-developer')
-  @ApiBody({
-    description: 'Creation de compte via un owner ou le lead developer',
-    type: RegisterDto,
-  })
-  registerWithScript(
-    @Body() dto: RegisterWithScriptDto,
-    @Req() req: Request,
-  ): Promise<ApiResponse<any>> {
-    // Authentifier via un header secret
-    const secret = req.headers['x-internal-secret'];
-    if (secret !== process.env.JWT_SECRET)
-      throw new UnauthorizedException('Accès refusé.');
+  // @UseGuards(AuthGuard) // @TODO  Refactoriser pour utiliser un guard spécifique
+  // @Post('auth-register')
+  // @ApiBody({
+  //   description: 'Creation de compte via un owner ou le lead developer',
+  //   type: AuthRegisterDto,
+  // })
+  // registerWithScript(
+  //   @Body() dto: AuthRegisterDto,
+  //   @AuthUser() user,
+  // ): Promise<ApiResponse<any>> {
+  //   const allowedRoles = [UserRole.Owner, UserRole.LeadDeveloper];
+  //   if (!allowedRoles.includes(user.role)) {
+  //     throw new UnauthorizedException(
+  //     'Seul un owner ou un lead developer peut créer un compte via ce script',
+  //     );
+  //   }
 
-    const { role, ...rest } = dto;
-    const userRole = role ?? UserRole.DG;
-    return this.authService.register(rest, userRole);
-  }
+  //   const { role, ...rest } = dto;
+  //   const userRole = role ?? UserRole.DG;
+
+  //   if (role && !allowedRoles.includes(user.role)) {
+  //     throw new UnauthorizedException(
+  //     `Vous n'avez pas la permission d'attribuer le rôle spécifié: ${role}`,
+  //     );
+  //   }
+
+  //   return this.authService.register(rest, userRole);
+  // }
 
   @Post('login')
   @ApiBody({

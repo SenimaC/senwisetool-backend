@@ -47,3 +47,9 @@ export type UserResponse = {
   company: CompanyResponse | null;
   role: Role;
 };
+
+export type LoginResponse = {
+  accessToken: string;
+  refreshToken: string;
+  user: UserResponse;
+};

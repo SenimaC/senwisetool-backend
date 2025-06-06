@@ -18,6 +18,7 @@ import {
 } from 'src/common/helpers/string-generator';
 import { ApiResponse } from 'src/common/types/api-response.type';
 import { EmailVerificationContext } from 'src/common/types/mail';
+import { LoginResponse } from 'src/common/types/user.type';
 import { CompanyService } from 'src/company/company.service';
 import { MailService } from 'src/mail/mail.service';
 import {
@@ -40,7 +41,12 @@ export class AuthService {
     @Inject(forwardRef(() => CompanyService)) // ✅ Important
     private readonly companyService: CompanyService,
   ) {}
-
+  /**
+   * Register a new user
+   * @param dto - Registration data
+   * @param role - Optional role ID to assign to the user
+   * @returns ApiResponse with success message and status code
+   */
   async register(dto: RegisterDto, role?: string): Promise<ApiResponse<any>> {
     try {
       const existingUser = await this.prisma.user.findUnique({
@@ -65,7 +71,7 @@ export class AuthService {
         });
         if (!defaultRole) {
           throw new BadRequestException(
-            'Rôle non trouvé. Veuillez spécifier un rôle valide.',
+            'Rôle non trouvé. Veuillez spécifier un rôle valide ou veuillez contacter le service technique.',
           );
         }
         roleId = defaultRole.id;
@@ -90,7 +96,12 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto): Promise<ApiResponse<any>> {
+  /**
+   * Login a user
+   * @param dto - Login data containing email and password
+   * @returns ApiResponse with access token, refresh token, and user data
+   */
+  async login(dto: LoginDto): Promise<ApiResponse<LoginResponse>> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email: dto.email },
@@ -104,7 +115,8 @@ export class AuthService {
       if (!user) throw new NotFoundException('Utilisateur introuvable');
 
       return successResponse('Connexion réussie', 201, {
-        ...tokens.data,
+        accessToken: tokens.data.access_token,
+        refreshToken: tokens.data.refresh_token,
         user: userData.data,
       });
     } catch (error) {
@@ -112,6 +124,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * Send user credentials via email
+   * @param email - User's email address
+   * @returns Hashed password for the user
+   */
   async sendUserCredential(email: string) {
     try {
       const password = generateSecurePassword();
@@ -125,6 +142,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * Resend email verification code to the user
+   * @param dto - Data transfer object containing user's email
+   * @returns ApiResponse with success message and status code
+   */
   async resendEmailVerification(dto: resendEmailVerificationDto) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -157,6 +179,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * Verify user's email using the provided code
+   * @param dto - Data transfer object containing email and verification code
+   * @returns ApiResponse with success message and status code
+   */
   async verifyEmail(dto: VerifyEmailDto) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -207,6 +234,12 @@ export class AuthService {
     }
   }
 
+  /**
+   * Change user's password
+   * @param dto - Data transfer object containing current and new passwords
+   * @param id - User's ID
+   * @returns ApiResponse with success message and status code
+   */
   async changePassword(dto: ChangePasswordDto, id: string) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -214,7 +247,7 @@ export class AuthService {
       });
       if (!user) throw new NotFoundException('User not found');
 
-      if (await bcrypt.compare(dto.currentPassword, user.password))
+      if (!(await bcrypt.compare(dto.currentPassword, user.password)))
         throw new ForbiddenException('Current password is not correct');
 
       const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
@@ -243,6 +276,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * Generate access and refresh tokens for the user
+   * @param userId - User's ID
+   * @returns ApiResponse with access and refresh tokens
+   */
   async generateTokens(userId: string) {
     try {
       const payload = { sub: userId };
@@ -272,6 +310,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * Refresh access and refresh tokens using the provided refresh token
+   * @param refreshToken - The refresh token to validate and use for generating new tokens
+   * @returns ApiResponse with new access and refresh tokens
+   */
   async refreshTokens(refreshToken: string) {
     try {
       const payload = await this.jwtService.verifyAsync(refreshToken, {
@@ -295,6 +338,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * Handle forgot password functionality
+   * @param email - User's email address
+   * @returns ApiResponse with success message and reset link
+   */
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -325,6 +373,12 @@ export class AuthService {
     );
   }
 
+  /**
+   * Reset user's password using the provided token and new password
+   * @param token - The reset token sent to the user's email
+   * @param newPassword - The new password to set for the user
+   * @returns ApiResponse with success message
+   */
   async resetPassword(token: string, newPassword: string) {
     try {
       const user = await this.prisma.user.findFirst({
@@ -351,6 +405,10 @@ export class AuthService {
     }
   }
 
+  /**
+   * Logout user by clearing the refresh token
+   * @param userId - User's ID
+   */
   async logout(userId: string) {
     await this.prisma.user.update({
       where: { id: userId },
