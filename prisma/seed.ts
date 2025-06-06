@@ -28,6 +28,13 @@ async function seed() {
     'VIEW_COMPANY',
     'MANAGE_COMPANY_STATUS',
     'MANAGE_COMPANY_AUTHORIZATION',
+    'CREATE_USER_WITH_LEAD_DEVELOPER_ROLE',
+    'CREATE_USER_WITH_DEVELOPER_ROLE',
+    'CREATE_USER_WITH_OWNER_ROLE',
+    'CREATE_USER_WITH_PDG_ROLE',
+    'CREATE_USER_WITH_DG_ROLE',
+    'CREATE_USER_WITH_ADG_ROLE',
+    'CREATE_USER_WITH_ASSISTANT_ROLE',
   ];
 
   for (const name of permissions) {
@@ -67,13 +74,24 @@ async function seed() {
             'CREATE_COMPANY',
             'UPDATE_COMPANY',
             'VIEW_COMPANY',
+            'CREATE_USER_WITH_ADG_ROLE',
+            'CREATE_USER_WITH_ASSISTANT_ROLE',
           ].includes(p.name),
         );
         break;
 
       case 'DEVELOPER':
         permissionsToAssign = allPermissions.filter(
-          (p) => !['CREATE_OWNER'].includes(p.name),
+          (p) =>
+            ![
+              'CREATE_OWNER',
+              'CREATE_USER_WITH_LEAD_DEVELOPER_ROLE',
+              'CREATE_USER_WITH_DEVELOPER_ROLE',
+              'CREATE_USER_WITH_PDG_ROLE',
+              'CREATE_USER_WITH_DG_ROLE',
+              'CREATE_USER_WITH_ADG_ROLE',
+              'CREATE_USER_WITH_ASSISTANT_ROLE',
+            ].includes(p.name),
         );
         break;
 

@@ -13,7 +13,7 @@ import {
 import { generate6DigitCode } from 'src/common/helpers/string-generator';
 import { CompanyResponse } from 'src/common/types/company.type';
 import { EmailVerificationContext } from 'src/common/types/mail';
-import { UserRole } from 'src/common/types/user.type';
+import { UserResponse } from 'src/common/types/user.type';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -204,7 +204,7 @@ export class CompanyService {
 
       return companyValidated;
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
@@ -218,7 +218,7 @@ export class CompanyService {
       const companyId = await this.hasCompany(userId);
 
       if (!companyId) {
-        throw new Error('Cet utilisateur ne possède pas compagnie.');
+        throw new Error('Cet utilisateur ne possède pas de compagnie.');
       }
 
       const company = await this.prisma.company.findUnique({
@@ -288,31 +288,45 @@ export class CompanyService {
         throw new Error('Compagnie introuvable.');
       }
 
+      const pdgRole = await this.prisma.role.findUnique({
+        where: { name: 'PDG' },
+      });
+
+      if (!pdgRole) {
+        throw new ForbiddenException('Rôle PDG introuvable.');
+      }
+
       const newUser = await this.authService.register(
         {
           firstName: 'PDG',
           lastName: 'PDG',
           email: dto.validationEmail,
         },
-        UserRole.PDG,
+        pdgRole.id,
       );
+
+      if (newUser.error) {
+        throw new ForbiddenException(newUser);
+      }
+      console.log('1111111111111 : ', newUser);
 
       await this.prisma.user.update({
         where: { id: newUser.data.id },
         data: {
           Company: {
-            connect: { id: company.id },
+            connect: { id: dto.companyId },
           },
         },
       });
+      console.log('2222222222222');
 
       return successResponse(
         'Autorisation accordée. En attente de la validation du PDG',
         201,
-        newUser,
+        newUser.data as UserResponse,
       );
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
@@ -353,15 +367,30 @@ export class CompanyService {
       where: { id: userId },
       select: { Company: { select: { id: true } } },
     });
+    console.log('iiid', user.Company);
 
-    return user.Company.id ?? null;
+    return user.Company?.id ?? null;
   };
 
   async getCompany(companyId: string) {
-    return this.prisma.company.findUnique({
-      where: { id: companyId },
-      include: { User: true }, // si tu veux inclure les utilisateurs liés
-    });
+    try {
+      const company = await this.prisma.company.findUnique({
+        where: { id: companyId },
+        include: {
+          User: {
+            include: { Role: true },
+          },
+        },
+      });
+
+      if (!company) {
+        throw new Error('Compagnie introuvable');
+      }
+
+      return successResponse('Compagnie récupérée avec succès', 200, company);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   async updateCompany(id: string, data: Partial<Company>) {

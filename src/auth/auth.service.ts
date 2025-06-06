@@ -79,7 +79,7 @@ export class AuthService {
 
       const hashedPassword = await this.sendUserCredential(dto.email);
 
-      await this.prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           ...dto,
           password: hashedPassword,
@@ -87,9 +87,13 @@ export class AuthService {
         },
       });
 
+      const userData = await this.userService.getUser(user.id);
+      if (!user) throw new NotFoundException('Utilisateur introuvable');
+
       return successResponse(
         'Compte créé avec succès. Les informations de connexion ont été envoyées à votre adresse email.',
         201,
+        userData,
       );
     } catch (error) {
       return errorResponse(error);

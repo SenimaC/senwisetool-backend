@@ -110,7 +110,9 @@ export class S3Service {
 
     const logoUrl = `https://${bucketName}.s3.${this.region}.amazonaws.com/${fileName}`;
 
-    Logger.log(`✅ Logo de la compagnie uploadé avec success : ${logoUrl}`);
+    Logger.log(
+      `✅ ${logoUrl} uploadé avec success dans le bucket ${bucketName}`,
+    );
     return logoUrl;
   }
 }

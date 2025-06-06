@@ -73,8 +73,8 @@ export class CompanyController {
       throw new BadRequestException('Le logo doit être une image valide.');
     }
 
-    if (logo.size > 5 * 1024 * 1024) {
-      throw new BadRequestException('Le logo ne doit pas dépasser 5MB.');
+    if (logo.size > 2 * 1024 * 1024) {
+      throw new BadRequestException('Le logo ne doit pas dépasser 2MB.');
     }
 
     // Validation du document d'autorisation
@@ -109,8 +109,9 @@ export class CompanyController {
     );
   }
 
-  @UseGuards(AuthGuard)
   @Post('create/location')
+  // @UseGuards(AuthGuard)
+  @Permissions('CREATE_COMPANY')
   @ApiBody({
     description: 'Ajouter la localisation de la compagnie',
     type: CreateCompanyStepLocationDto,
@@ -139,7 +140,6 @@ export class CompanyController {
   @Post('create/resend-email-verification')
   @ApiBody({
     description: "Renvoie de l'email de la compagnie",
-    type: CreateCompanyStepEmailVerificationDto,
   })
   async resendEmailVerification(@AuthUser() user) {
     return this.companyService.resendEmailVerification(user.id);
@@ -168,8 +168,8 @@ export class CompanyController {
     @Body() dto: ValidateAutorizationDto,
     @AuthUser() user,
   ) {
-    if (user.role !== UserRole.OWNER)
-      throw new UnauthorizedException('Accès refusé');
+    // if (user.role !== UserRole.OWNER)
+    //   throw new UnauthorizedException('Accès refusé');
 
     return this.companyService.ValidateAutorization(dto);
   }
