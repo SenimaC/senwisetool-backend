@@ -34,6 +34,15 @@ export class CompanyService {
     private prisma: PrismaService,
   ) {}
 
+  /**
+   * Création de la compagnie : Etape d'initialisation avec les informations sur l'identité de la compagnie
+   * @param dto - CreateCompanyStepInitDto
+   * @param userId - ID de l'utilisateur
+   * @param bucketName - Nom du bucket S3 pour stocker les fichiers
+   * @param logoUrl - URL du logo de la compagnie
+   * @param authorizationUrl - URL du document d'autorisation
+   * @returns ApiResponse
+   */
   async createStepCompany(
     dto: CreateCompanyStepInitDto,
     userId: string,
@@ -77,6 +86,12 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Création de la compagnie : Etape de récupération des informations de la localisation et mise à jour de la compagnie
+   * @param dto - CreateCompanyStepLocationDto
+   * @param userId - ID de l'utilisateur
+   * @returns ApiResponse
+   */
   async createStepLocation(dto: CreateCompanyStepLocationDto, userId: string) {
     try {
       const companyId = await this.hasCompany(userId);
@@ -103,6 +118,12 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Creation de la compagnie : Etape de récupération des Contacts et mise à jour de la compagnie
+   * @param dto - CreateCompanyStepContactDto
+   * @param userId - ID de l'utilisateur
+   * @returns ApiResponse
+   */
   async createStepContact(dto: CreateCompanyStepContactDto, userId: string) {
     try {
       const companyId = await this.hasCompany(userId);
@@ -131,6 +152,12 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Creation de la compagnie : Etape de Vérification de l'email et mise à jour de la compagnie
+   * @param dto - CreateCompanyStepEmailVerificationDto
+   * @param userId - ID de l'utilisateur
+   * @returns ApiResponse
+   */
   async createStepEmailVerification(
     dto: CreateCompanyStepEmailVerificationDto,
     userId: string,
@@ -181,6 +208,11 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Renvoie un email de vérification à l'utilisateur
+   * @param userId - ID de l'utilisateur
+   * @returns ApiResponse
+   */
   async resendEmailVerification(userId: string) {
     try {
       const companyId = await this.hasCompany(userId);
@@ -217,6 +249,11 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Valide le processus de création de la compagnie
+   * @param companyId - ID de la compagnie
+   * @returns ApiResponse
+   */
   private async validateCreationProcess(companyId: string) {
     try {
       const companyCompleted = await this.prisma.company.update({
@@ -236,10 +273,15 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Valide l'autorisation de création de la compagnie par le OWNER
+   * @param dto - ValidateAutorizationDto
+   * @returns ApiResponse
+   */
   async ValidateAutorization(dto: ValidateAutorizationDto) {
     try {
       const company = await this.prisma.company.findUnique({
-        where: { id: dto.companyId, email: dto.companyEmail },
+        where: { id: dto.companyId },
       });
 
       if (!company) {
@@ -248,8 +290,8 @@ export class CompanyService {
 
       const newUser = await this.authService.register(
         {
-          firstName: dto.firstName,
-          lastName: dto.lastName,
+          firstName: 'PDG',
+          lastName: 'PDG',
           email: dto.validationEmail,
         },
         UserRole.PDG,
@@ -274,10 +316,15 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Rejet de la demande d'autorisation de création de la compagnie
+   * @param dto - RejetAutorizationDto
+   * @returns ApiResponse
+   */
   async RejetAutorization(dto: RejetAutorizationDto) {
     try {
       const company = await this.prisma.company.findUnique({
-        where: { id: dto.companyId, email: dto.companyEmail },
+        where: { id: dto.companyId },
       });
 
       if (!company) {
@@ -296,6 +343,11 @@ export class CompanyService {
     }
   }
 
+  /**
+   * Vérifie si l'utilisateur a une compagnie associée
+   * @param userId - ID de l'utilisateur
+   * @returns ID de la compagnie ou null si aucune compagnie n'est associée
+   */
   hasCompany = async (userId: string): Promise<string | null> => {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

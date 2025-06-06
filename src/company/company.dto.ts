@@ -51,14 +51,6 @@ export class CreateCompanyStepEmailVerificationDto {
 }
 
 export class ValidateAutorizationDto {
-  @ApiProperty({ example: 'Jean' })
-  @IsString()
-  firstName: string;
-
-  @ApiProperty({ example: 'Dupont' })
-  @IsString()
-  lastName: string;
-
   @ApiProperty({ example: '152fie885e9u' })
   @IsString()
   companyId: string;
@@ -66,20 +58,12 @@ export class ValidateAutorizationDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   validationEmail: string;
-
-  @ApiProperty({ example: 'contact@companymail.com' })
-  @IsEmail()
-  companyEmail: string;
 }
 
 export class RejetAutorizationDto {
   @ApiProperty({ example: '152fie885e9u' })
   @IsString()
   companyId: string;
-
-  @ApiProperty({ example: 'contact@companymail.com' })
-  @IsEmail()
-  companyEmail: string;
 
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()

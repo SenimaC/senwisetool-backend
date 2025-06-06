@@ -1,3 +1,5 @@
+import { Role } from '@prisma/client';
+import { CompanyResponse } from './company.type';
 export enum UserRole {
   DEVELOPER = 'DEVELOPER',
   OWNER = 'OWNER',
@@ -42,5 +44,6 @@ export type UserResponse = {
   createdAt: Date;
   firstName: string;
   lastName: string;
-  companyId: string | null;
+  company: CompanyResponse | null;
+  role: Role;
 };

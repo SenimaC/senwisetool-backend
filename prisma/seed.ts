@@ -136,8 +136,8 @@ async function seed() {
   // 📩 Données de l'utilisateur développeur
   const email =
     config.get('DEVELOPER_ACCOUNT_MAIL') || 'jlove.livestyle@gmail.com';
-  const firstName = config.get('DEVELOPER_USER_FIRSTNAME') || 'Jean';
-  const lastName = config.get('DEVELOPER_USER_LASTNAME') || 'Love';
+  const firstName = config.get('DEVELOPER_USER_FIRSTNAME') || 'Kelkun';
+  const lastName = config.get('DEVELOPER_USER_LASTNAME') || 'Ulrich';
 
   try {
     await authService.register(

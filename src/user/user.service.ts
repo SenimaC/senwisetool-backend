@@ -18,13 +18,25 @@ export class UserService {
 
   async getUser(id: string) {
     try {
-      const user = await this.prisma.user.findUnique({ where: { id } });
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          Company: true,
+          Role: {
+            include: {
+              permissions: true,
+            },
+          },
+        },
+      });
       if (!user) throw new NotFoundException('Utilisateur introuvable');
-      return successResponse(
-        "Données de l'utilisateur",
-        204,
-        user as UserResponse,
-      );
+
+      const { Company, Role, ...userData } = user;
+      return successResponse("Données de l'utilisateur", 204, {
+        ...userData,
+        company: Company,
+        role: Role,
+      } as UserResponse);
     } catch (error) {
       errorResponse(error);
     }

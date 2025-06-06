@@ -139,6 +139,7 @@ export class CompanyController {
   @Post('create/resend-email-verification')
   @ApiBody({
     description: "Renvoie de l'email de la compagnie",
+    type: CreateCompanyStepEmailVerificationDto,
   })
   async resendEmailVerification(@AuthUser() user) {
     return this.companyService.resendEmailVerification(user.id);
@@ -148,6 +149,7 @@ export class CompanyController {
   @Post('create/email-verification')
   @ApiBody({
     description: "Verification de l'email de la compagnie",
+    type: CreateCompanyStepEmailVerificationDto,
   })
   async CreateStepContactEmailVerification(
     @Body() dto: CreateCompanyStepEmailVerificationDto,
@@ -160,6 +162,7 @@ export class CompanyController {
   @Post('validate-authorization')
   @ApiBody({
     description: "Valider la demande d'autorisation de création la compagnie",
+    type: ValidateAutorizationDto,
   })
   async ValidateAutorizationDto(
     @Body() dto: ValidateAutorizationDto,
@@ -175,6 +178,7 @@ export class CompanyController {
   @Post('rejet-authorization')
   @ApiBody({
     description: "rejeter la demande d'autorisation de création la compagnie",
+    type: RejetAutorizationDto,
   })
   async RejetAutorizationDto(
     @Body() dto: RejetAutorizationDto,

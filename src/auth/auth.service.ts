@@ -7,7 +7,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import {
   errorResponse,
@@ -19,7 +18,6 @@ import {
 } from 'src/common/helpers/string-generator';
 import { ApiResponse } from 'src/common/types/api-response.type';
 import { EmailVerificationContext } from 'src/common/types/mail';
-import { UserResponse } from 'src/common/types/user.type';
 import { CompanyService } from 'src/company/company.service';
 import { MailService } from 'src/mail/mail.service';
 import {
@@ -53,28 +51,39 @@ export class AuthService {
         throw new BadRequestException('Email déjà utilisé');
       }
 
+      let roleId: string = null;
+      if (role) {
+        const existingRole = await this.prisma.role.findUnique({
+          where: { id: role },
+        });
+        if (existingRole) roleId = existingRole.id;
+      }
+
+      if (!role || !roleId) {
+        const defaultRole = await this.prisma.role.findUnique({
+          where: { name: process.env.DEFAULT_USER_ROLE },
+        });
+        if (!defaultRole) {
+          throw new BadRequestException(
+            'Rôle non trouvé. Veuillez spécifier un rôle valide.',
+          );
+        }
+        roleId = defaultRole.id;
+      }
+
       const hashedPassword = await this.sendUserCredential(dto.email);
 
-      const newUser = role
-        ? await this.prisma.user.create({
-            data: {
-              ...dto,
-              password: hashedPassword,
-              roleId: role || UserRole.DG, // Provide a default role if not specified
-            },
-          })
-        : await this.prisma.user.create({
-            data: {
-              ...dto,
-              password: hashedPassword,
-              roleId: role || UserRole.DG, // Provide a default role if not specified
-            },
-          });
+      await this.prisma.user.create({
+        data: {
+          ...dto,
+          password: hashedPassword,
+          roleId,
+        },
+      });
 
       return successResponse(
         'Compte créé avec succès. Les informations de connexion ont été envoyées à votre adresse email.',
         201,
-        newUser as UserResponse,
       );
     } catch (error) {
       return errorResponse(error);
@@ -92,17 +101,11 @@ export class AuthService {
       const tokens = await this.generateTokens(user.id);
 
       const userData = await this.userService.getUser(user.id);
-
-      const companyId = userData.data.companyId;
-
-      const company = companyId
-        ? await this.companyService.getCompany(companyId)
-        : null;
+      if (!user) throw new NotFoundException('Utilisateur introuvable');
 
       return successResponse('Connexion réussie', 201, {
         ...tokens.data,
         user: userData.data,
-        company,
       });
     } catch (error) {
       return errorResponse(error);
@@ -246,7 +249,7 @@ export class AuthService {
       const [access_token, refresh_token] = await Promise.all([
         this.jwtService.signAsync(payload, {
           secret: process.env.JWT_SECRET,
-          expiresIn: '5m',
+          expiresIn: '1h',
         }),
         this.jwtService.signAsync(payload, {
           secret: process.env.JWT_REFRESH_SECRET,
