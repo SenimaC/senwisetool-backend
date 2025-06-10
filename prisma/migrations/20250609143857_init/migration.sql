@@ -14,6 +14,9 @@ CREATE TYPE "CompanyStatus" AS ENUM ('BUILDING', 'PENDING', 'UNACTIVE', 'ACTIVE'
 CREATE TABLE "Role" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Role_pkey" PRIMARY KEY ("id")
 );
@@ -22,6 +25,9 @@ CREATE TABLE "Role" (
 CREATE TABLE "Permission" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Permission_pkey" PRIMARY KEY ("id")
 );

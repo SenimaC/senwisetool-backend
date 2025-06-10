@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { CanAssignRoleInterceptor } from 'src/common/interceptors/can-assign-role.interceptor';
 import { CompanyModule } from 'src/company/company.module';
 import { MailModule } from 'src/mail/mail.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
@@ -22,7 +23,7 @@ import { JwtStrategy } from './jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  providers: [AuthService, JwtStrategy, CanAssignRoleInterceptor],
+  exports: [AuthService, CanAssignRoleInterceptor],
 })
 export class AuthModule {}

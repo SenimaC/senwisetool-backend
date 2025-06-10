@@ -1,7 +1,17 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
+import { AllRoles } from 'src/common/constants/roles.constant';
+import { CanAssignRole } from 'src/common/decorators/can-assign-role.decorator';
+import { Permissions } from 'src/common/decorators/permissions.decorator';
 import { ApiResponse } from 'src/common/types/api-response.type';
 import {
+  AuthRegisterDto,
   ChangePasswordDto,
   LoginDto,
   RefreshTokenDto,
@@ -26,34 +36,33 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
-  // @UseGuards(AuthGuard) // @TODO  Refactoriser pour utiliser un guard spécifique
-  // @Post('auth-register')
-  // @ApiBody({
-  //   description: 'Creation de compte via un owner ou le lead developer',
-  //   type: AuthRegisterDto,
-  // })
-  // registerWithScript(
-  //   @Body() dto: AuthRegisterDto,
-  //   @AuthUser() user,
-  // ): Promise<ApiResponse<any>> {
-  //   const allowedRoles = [UserRole.Owner, UserRole.LeadDeveloper];
-  //   if (!allowedRoles.includes(user.role)) {
-  //     throw new UnauthorizedException(
-  //     'Seul un owner ou un lead developer peut créer un compte via ce script',
-  //     );
-  //   }
+  @UseGuards(AuthGuard)
+  @Post('auth-register')
+  @Permissions('CREATE_USER')
+  @CanAssignRole()
+  @ApiBody({
+    description: 'Création de compte avec assignation de rôle contrôlée',
+    type: AuthRegisterDto,
+  })
+  async authRegister(
+    @Body() dto: AuthRegisterDto,
+    @AuthUser() user,
+  ): Promise<ApiResponse<any>> {
+    const { role, ...rest } = dto;
 
-  //   const { role, ...rest } = dto;
-  //   const userRole = role ?? UserRole.DG;
+    if (!['OWNER', 'LEAD_DEVELOPER', 'DG', 'ADG'].includes(user.role)) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez pas créer de compte avec ce rôle',
+      );
+    }
 
-  //   if (role && !allowedRoles.includes(user.role)) {
-  //     throw new UnauthorizedException(
-  //     `Vous n'avez pas la permission d'attribuer le rôle spécifié: ${role}`,
-  //     );
-  //   }
+    const roleToAssign = role ?? AllRoles.DG;
 
-  //   return this.authService.register(rest, userRole);
-  // }
+    return this.authService.register(
+      { firstName: 'user', lastName: 'user', email: rest.email },
+      roleToAssign,
+    );
+  }
 
   @Post('login')
   @ApiBody({

@@ -17,40 +17,35 @@ import { RoleService } from './roles.service';
 
 @Controller('roles')
 @UseGuards(AuthGuard, RolesGuard)
+@Roles('DEVELOPER', 'LEAD_DEVELOPER') // ⬅️ tous les endpoints doivent avoir ce rôle minimum
 export class RolesController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post('create')
-  @Roles('DEVELOPER')
   createRole(@Body() dto: CreateRoleDto) {
     return this.roleService.createRole(dto);
   }
 
   @Get()
-  @Roles('ADMIN', 'SUPERADMIN') // seuls ces rôles peuvent accéder
   getAllRoles() {
     return this.roleService.getAllRoles();
   }
 
   @Get(':id')
-  @Roles('DEVELOPER')
   getRoleById(@Param('id') roleId: string) {
     return this.roleService.getRoleById(roleId);
   }
 
   @Patch(':id')
-  @Roles('DEVELOPER')
   updateRole(@Param('id') roleId: string, @Body() dto: UpdateRoleDto) {
     return this.roleService.updateRole(roleId, dto);
   }
 
   @Delete(':id')
-  @Roles('DEVELOPER')
   deleteRole(@Param('id') roleId: string) {
     return this.roleService.deleteRole(roleId);
   }
 
-  @Roles('DEVELOPER')
   @Patch(':id/permissions')
   @ApiOperation({ summary: 'Assigner des permissions à un rôle' })
   @ApiParam({

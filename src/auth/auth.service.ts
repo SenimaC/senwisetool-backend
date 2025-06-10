@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { AllRoles } from 'src/common/constants/roles.constant';
 import {
   errorResponse,
   successResponse,
@@ -59,9 +60,30 @@ export class AuthService {
 
       let roleId: string = null;
       if (role) {
+        // verifier s'il existe un lead developer
+        const leaDevRole = await this.prisma.role.findUnique({
+          where: { name: AllRoles.LEAD_DEVELOPER },
+        });
+
+        if (leaDevRole) {
+          // Si le rôle est LEAD_DEVELOPER, vérifier s'il y a déjà un lead developer
+          if (role === leaDevRole.id) {
+            const exist_lead_developer = await this.prisma.user.findFirst({
+              where: { roleId: leaDevRole.id },
+            });
+
+            if (exist_lead_developer) {
+              throw new BadRequestException(
+                'Un lead developer existe déjà. Veuillez choisir un autre rôle.',
+              );
+            }
+          }
+        }
+
         const existingRole = await this.prisma.role.findUnique({
           where: { id: role },
         });
+
         if (existingRole) roleId = existingRole.id;
       }
 
@@ -179,7 +201,7 @@ export class AuthService {
         201,
       );
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 

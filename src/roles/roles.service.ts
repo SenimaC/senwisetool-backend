@@ -47,4 +47,20 @@ export class RoleService {
       where: { id: roleId },
     });
   }
+
+  async getRoleByName(name: string) {
+    return this.prisma.role.findUnique({
+      where: { name },
+      include: { permissions: true },
+    });
+  }
+
+  async findByNames(names: string[]) {
+    return this.prisma.role.findMany({
+      where: {
+        name: { in: names },
+      },
+      select: { id: true, name: true },
+    });
+  }
 }

@@ -343,7 +343,7 @@ export class CompanyService {
         throw new Error('Compagnie introuvable.');
       }
 
-      await this.mailService.sendMessage(dto.compagnyEmailUser, dto.comment);
+      await this.mailService.sendMessage(company.email, dto.comment);
       await this.prisma.company.update({
         where: { id: dto.companyId },
         data: { status: CompanyStatus.REJECTED },
@@ -386,6 +386,22 @@ export class CompanyService {
       }
 
       return successResponse('Compagnie récupérée avec succès', 200, company);
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
+  async getCompanies() {
+    try {
+      const companies = await this.prisma.company.findMany({
+        include: {
+          User: {
+            include: { Role: true },
+          },
+        },
+      });
+
+      return successResponse('Liste des compagnies', 200, companies);
     } catch (error) {
       return errorResponse(error);
     }

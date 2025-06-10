@@ -1,5 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { AllPermissions } from 'src/common/constants/permissions.constant';
+import { RolePermissionsMap } from 'src/common/constants/role-permissions.map';
+import { AllRoles } from 'src/common/constants/roles.constant';
 import { AppModule } from '../src/app.module';
 import { AuthService } from '../src/auth/auth.service';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -11,33 +14,9 @@ async function seed() {
   const authService = app.get(AuthService);
   const config = app.get(ConfigService);
 
-  // ⚙️ Création des permissions
-  const permissions = [
-    'CREATE_OWNER',
-    'CREATE_DEVELOPER',
-    'VIEW_USER',
-    'UPDATE_USER',
-    'DELETE_USER',
-    'MANAGE_USER_ROLE',
-    'MANAGE_USER_STATUS',
-    'RESET_USER_PASSWORD',
-    'VERIFY_USER_EMAIL',
-    'CREATE_COMPANY',
-    'UPDATE_COMPANY',
-    'DELETE_COMPANY',
-    'VIEW_COMPANY',
-    'MANAGE_COMPANY_STATUS',
-    'MANAGE_COMPANY_AUTHORIZATION',
-    'CREATE_USER_WITH_LEAD_DEVELOPER_ROLE',
-    'CREATE_USER_WITH_DEVELOPER_ROLE',
-    'CREATE_USER_WITH_OWNER_ROLE',
-    'CREATE_USER_WITH_PDG_ROLE',
-    'CREATE_USER_WITH_DG_ROLE',
-    'CREATE_USER_WITH_ADG_ROLE',
-    'CREATE_USER_WITH_ASSISTANT_ROLE',
-  ];
-
-  for (const name of permissions) {
+  // 📌 1. Créer toutes les permissions
+  console.log('🌱 Seeding permissions...');
+  for (const name of Object.values(AllPermissions)) {
     await prisma.permission.upsert({
       where: { name },
       update: {},
@@ -46,133 +25,68 @@ async function seed() {
   }
 
   const allPermissions = await prisma.permission.findMany();
+  const permissionMap = Object.fromEntries(
+    allPermissions.map((perm) => [perm.name, perm]),
+  );
 
-  const roles = [
-    'LEAD_DEVELOPER',
-    'DEVELOPER',
-    'OWNER',
-    'PDG',
-    'DG',
-    'ADG',
-    'ASSISTANT',
-  ];
+  // 📌 2. Créer tous les rôles et assigner les permissions
+  console.log('🌱 Seeding roles and assigning permissions...');
+  for (const roleName of Object.values(AllRoles)) {
+    const rolePermissions = RolePermissionsMap[roleName] || [];
 
-  console.log('🌱 Seeding roles...');
-  // Assigner toutes les permissions à certains rôles clés
-  for (const role of roles) {
-    let permissionsToAssign = [];
-
-    switch (role) {
-      case 'LEAD_DEVELOPER':
-        permissionsToAssign = allPermissions;
-        break;
-      case 'DG':
-        permissionsToAssign = allPermissions.filter((p) =>
-          [
-            'RESET_USER_PASSWORD',
-            'VERIFY_USER_EMAIL',
-            'CREATE_COMPANY',
-            'UPDATE_COMPANY',
-            'VIEW_COMPANY',
-            'CREATE_USER_WITH_ADG_ROLE',
-            'CREATE_USER_WITH_ASSISTANT_ROLE',
-          ].includes(p.name),
-        );
-        break;
-
-      case 'DEVELOPER':
-        permissionsToAssign = allPermissions.filter(
-          (p) =>
-            ![
-              'CREATE_OWNER',
-              'CREATE_USER_WITH_LEAD_DEVELOPER_ROLE',
-              'CREATE_USER_WITH_DEVELOPER_ROLE',
-              'CREATE_USER_WITH_PDG_ROLE',
-              'CREATE_USER_WITH_DG_ROLE',
-              'CREATE_USER_WITH_ADG_ROLE',
-              'CREATE_USER_WITH_ASSISTANT_ROLE',
-            ].includes(p.name),
-        );
-        break;
-
-      case 'OWNER':
-        permissionsToAssign = allPermissions.filter(
-          (p) => !['CREATE_OWNER', 'CREATE_DEVELOPER'].includes(p.name),
-        );
-        break;
-      case 'PDG':
-        permissionsToAssign = allPermissions.filter((p) =>
-          [
-            'VIEW_USER',
-            'UPDATE_USER',
-            'VIEW_COMPANY',
-            'UPDATE_COMPANY',
-          ].includes(p.name),
-        );
-        break;
-
-      case 'ADG':
-        permissionsToAssign = allPermissions.filter((p) =>
-          [
-            'VIEW_USER',
-            'MANAGE_USER_STATUS',
-            'VIEW_COMPANY',
-            'MANAGE_COMPANY_STATUS',
-          ].includes(p.name),
-        );
-        break;
-
-      case 'ASSISTANT':
-        permissionsToAssign = allPermissions.filter((p) =>
-          ['VIEW_USER', 'VIEW_COMPANY'].includes(p.name),
-        );
-        break;
-
-      default:
-        permissionsToAssign = [];
-        break;
-    }
+    const permissionsToAssign = rolePermissions.map((permName) => ({
+      id: permissionMap[permName].id,
+    }));
 
     await prisma.role.upsert({
-      where: { name: role },
-      update: {},
-      create: {
-        name: role,
+      where: { name: roleName },
+      update: {
         permissions: {
-          connect: permissionsToAssign.map((p) => ({ id: p.id })),
+          set: [], // clean previous
+          connect: permissionsToAssign,
+        },
+      },
+      create: {
+        name: roleName,
+        permissions: {
+          connect: permissionsToAssign,
         },
       },
     });
+
+    console.log(
+      `✅ Role ${roleName} seeded with ${permissionsToAssign.length} permissions.`,
+    );
   }
 
-  const devRole = await prisma.role.findUnique({
-    where: { name: 'LEAD_DEVELOPER' },
+  // 📌 3. Créer un utilisateur développeur principal s’il n’existe pas
+  const leaDevRole = await prisma.role.findUnique({
+    where: { name: AllRoles.LEAD_DEVELOPER },
   });
 
-  if (!devRole) throw new Error("Rôle 'DEVELOPER' introuvable");
+  if (!leaDevRole) {
+    throw new Error('❌ Rôle LEAD_DEVELOPER introuvable');
+  }
 
-  // 📩 Données de l'utilisateur développeur
-  const email =
-    config.get('DEVELOPER_ACCOUNT_MAIL') || 'jlove.livestyle@gmail.com';
-  const firstName = config.get('DEVELOPER_USER_FIRSTNAME') || 'Kelkun';
-  const lastName = config.get('DEVELOPER_USER_LASTNAME') || 'Ulrich';
+  const existingLeadDev = await prisma.user.findFirst({
+    where: { roleId: leaDevRole.id },
+  });
 
-  try {
-    await authService.register(
-      {
-        email,
-        firstName,
-        lastName,
-      },
-      devRole.id,
-    );
+  if (!existingLeadDev) {
+    const email =
+      config.get('DEVELOPER_ACCOUNT_MAIL') || 'jlove.livestyle@gmail.com';
+    const firstName = config.get('DEVELOPER_USER_FIRSTNAME') || 'Kelkun';
+    const lastName = config.get('DEVELOPER_USER_LASTNAME') || 'Ulrich';
 
-    console.log('✅ Utilisateur développeur créé avec succès via AuthService');
-  } catch (error) {
-    console.error(
-      '❌ Erreur pendant la création de l’utilisateur développeur :',
-      error,
-    );
+    try {
+      await authService.register({ email, firstName, lastName }, leaDevRole.id);
+      console.log('✅ développeur principal créé.');
+    } catch (error) {
+      console.error(
+        '❌ Erreur lors de la création du développeur principal :',
+        error,
+      );
+    }
   }
 
   await app.close();

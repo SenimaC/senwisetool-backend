@@ -12,8 +12,28 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    const users = await this.prisma.user.findMany();
-    return successResponse('Liste des utilisateurs', 200, users);
+    try {
+      const users = await this.prisma.user.findMany({
+        include: {
+          Company: true,
+          Role: {
+            include: {
+              permissions: true,
+            },
+          },
+        },
+      });
+
+      const formattedUsers = users.map(({ Company, Role, ...userData }) => ({
+        ...userData,
+        company: Company,
+        role: Role,
+      }));
+
+      return successResponse('Liste des utilisateurs', 200, formattedUsers);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   async getUser(id: string) {
@@ -38,7 +58,7 @@ export class UserService {
         role: Role,
       } as UserResponse);
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 

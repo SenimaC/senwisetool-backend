@@ -65,10 +65,6 @@ export class RejetAutorizationDto {
   @IsString()
   companyId: string;
 
-  @ApiProperty({ example: 'user@example.com' })
-  @IsEmail()
-  compagnyEmailUser: string;
-
   @ApiProperty({ example: '152fie885e9u' })
   @IsString()
   comment: string;
