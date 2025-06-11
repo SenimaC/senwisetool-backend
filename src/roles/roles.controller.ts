@@ -9,20 +9,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam } from '@nestjs/swagger';
-import { Roles } from 'src/common/decorators/roles.decorator';
+import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { Secure } from 'src/common/decorators/secure.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AssignPermissionsDto, CreateRoleDto, UpdateRoleDto } from './role.dto';
 import { RoleService } from './roles.service';
 
 @Controller('roles')
-@Secure('ACTIVE_USER')
+@Secure('ACTIVE_USER', AllPermissions.ROLE_MANAGER)
 @UseGuards(RolesGuard)
-@Roles('DEVELOPER', 'LEAD_DEVELOPER') // ⬅️ tous les endpoints doivent avoir ce rôle minimum
+// @Roles('LEAD_DEVELOPER') // ⬅️ tous les endpoints doivent avoir ce rôle minimum
 export class RolesController {
   constructor(private readonly roleService: RoleService) {}
 
-  @Post('create')
+  @Post()
   @ApiBody({ description: "Création d'un role", type: CreateRoleDto })
   createRole(@Body() dto: CreateRoleDto) {
     return this.roleService.createRole(dto);

@@ -14,6 +14,7 @@ export const RolePermissionsMap: Record<string, string[]> = {
         [
           AllPermissions.CREATE_OWNER,
           AllPermissions.CREATE_DEVELOPER,
+          AllPermissions.ROLE_MANAGER,
         ] as string[]
       ).includes(p),
   ),

@@ -14,4 +14,5 @@ export const AllPermissions = {
   CREATE_ADG: 'CREATE_ADG',
 
   USER_MANAGER: 'USER_MANAGER',
+  ROLE_MANAGER: 'ROLE_MANAGER',
 } as const;
