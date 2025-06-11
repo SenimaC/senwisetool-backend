@@ -1,3 +1,4 @@
+// guards/auth.guard.ts
 import {
   ExecutionContext,
   Injectable,
@@ -10,13 +11,14 @@ import { TokenExpiredError } from 'jsonwebtoken';
 @Injectable()
 export class AuthGuard extends JwtAuthGuard('jwt') {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handleRequest(err, user, info, context: ExecutionContext) {
+  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
     if (info instanceof TokenExpiredError) {
-      Logger.log(info);
+      Logger.warn('Token expiré', info);
       throw new UnauthorizedException('Token expiré');
     }
 
     if (err || !user) {
+      Logger.warn('Token invalide', err || info);
       throw new UnauthorizedException('Token invalide');
     }
 

@@ -9,19 +9,16 @@ import {
   Post,
   UnauthorizedException,
   UploadedFiles,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
-import { Company } from '@prisma/client';
-import { AuthGuard } from 'jwt.guard';
+import { Company, UserRole } from '@prisma/client';
 import { S3Service } from 'src/aws/s3.service';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
-import { Permissions } from 'src/common/decorators/permissions.decorator';
-import { PermissionsGuard } from 'src/common/guards/Permissions.guard';
-import { UserRole } from 'src/common/types/user.type';
+import { Secure } from 'src/common/decorators/secure.decorator';
+import { CurrentUser } from 'src/common/types/user.type';
 import {
   CreateCompanyStepContactDto,
   CreateCompanyStepEmailVerificationDto,
@@ -32,7 +29,6 @@ import {
 } from './company.dto';
 import { CompanyService } from './company.service';
 
-@UseGuards(AuthGuard, PermissionsGuard)
 @Controller('company')
 export class CompanyController {
   constructor(
@@ -41,7 +37,7 @@ export class CompanyController {
   ) {}
 
   @Post('create')
-  @Permissions(AllPermissions.CREATE_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'logo', maxCount: 1 },
@@ -110,7 +106,7 @@ export class CompanyController {
   }
 
   @Post('create/location')
-  @Permissions(AllPermissions.CREATE_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: 'Ajouter la localisation de la compagnie',
     type: CreateCompanyStepLocationDto,
@@ -123,12 +119,12 @@ export class CompanyController {
   }
 
   @Post('create/contact')
-  @Permissions(AllPermissions.CREATE_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: 'Ajouter les contacts de la compagnie',
     type: CreateCompanyStepContactDto,
   })
-  async CreateStepContact(
+  async createStepContact(
     @Body() dto: CreateCompanyStepContactDto,
     @AuthUser() user,
   ) {
@@ -136,7 +132,7 @@ export class CompanyController {
   }
 
   @Post('create/resend-email-verification')
-  @Permissions(AllPermissions.CREATE_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: "Renvoie de l'email de la compagnie",
   })
@@ -145,12 +141,12 @@ export class CompanyController {
   }
 
   @Post('create/email-verification')
-  @Permissions(AllPermissions.CREATE_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: "Verification de l'email de la compagnie",
     type: CreateCompanyStepEmailVerificationDto,
   })
-  async CreateStepContactEmailVerification(
+  async createStepContactEmailVerification(
     @Body() dto: CreateCompanyStepEmailVerificationDto,
     @AuthUser() user,
   ) {
@@ -158,24 +154,24 @@ export class CompanyController {
   }
 
   @Post('validate-authorization')
-  @Permissions(AllPermissions.VALIDATE_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.VALIDATE_COMPANY)
   @ApiBody({
     description: "Valider la demande d'autorisation de création la compagnie",
     type: ValidateAutorizationDto,
   })
-  async ValidateAutorizationDto(@Body() dto: ValidateAutorizationDto) {
+  async validateAutorizationDto(@Body() dto: ValidateAutorizationDto) {
     return this.companyService.ValidateAutorization(dto);
   }
 
   @Post('rejet-authorization')
-  @Permissions(AllPermissions.REJET_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.REJET_COMPANY)
   @ApiBody({
     description: "rejeter la demande d'autorisation de création la compagnie",
     type: RejetAutorizationDto,
   })
-  async RejetAutorizationDto(
+  async rejetAutorizationDto(
     @Body() dto: RejetAutorizationDto,
-    @AuthUser() user,
+    @AuthUser() user: CurrentUser,
   ) {
     if (user.role !== UserRole.OWNER)
       throw new UnauthorizedException('Accès refusé');
@@ -186,13 +182,13 @@ export class CompanyController {
   // gestion des compagnies *********************
 
   @Get(':id')
-  @Permissions(AllPermissions.VIEW_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.VIEW_COMPANY)
   getCompany(@Param('id') id: string) {
     return this.companyService.getCompany(id);
   }
 
   @Get('me')
-  @Permissions(AllPermissions.VIEW_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.VIEW_COMPANY)
   getSelfCompany(@AuthUser() user) {
     const id = user.companyId;
     if (!id) {
@@ -202,13 +198,13 @@ export class CompanyController {
   }
 
   @Get()
-  @Permissions(AllPermissions.VIEW_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.VIEW_COMPANY)
   getCompanies() {
     return this.companyService.getCompanies();
   }
 
   @Patch('me')
-  @Permissions(AllPermissions.UPDATE_SELF_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.UPDATE_SELF_COMPANY)
   updateCompany(@AuthUser() user, @Body() data: Partial<Company>) {
     if (!user.companyId) {
       throw new BadRequestException("Vous n'avez pas de compagnie associée.");
@@ -217,7 +213,7 @@ export class CompanyController {
   }
 
   @Delete(':id')
-  @Permissions(AllPermissions.DELETE_COMPANY)
+  @Secure('ACTIVE_USER', AllPermissions.DELETE_COMPANY)
   deleteCompany(@Param('id') id: string) {
     return this.companyService.deleteCompany(id);
   }

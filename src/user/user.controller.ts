@@ -9,14 +9,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
-import { Permissions } from 'src/common/decorators/permissions.decorator';
+import { Secure } from 'src/common/decorators/secure.decorator';
 import { AuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { PermissionsGuard } from 'src/common/guards/Permissions.guard';
 import { UpdateUserDto } from './user.dto';
 import { UserService } from './user.service';
 
 @UseGuards(AuthGuard, PermissionsGuard)
-@Permissions(AllPermissions.USER_MANAGER) // ⬅️ S'applique à tous les endpoints du contrôleur
+@Secure('ACTIVE_USER', AllPermissions.USER_MANAGER)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}

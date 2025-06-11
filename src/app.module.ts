@@ -3,14 +3,16 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CampaignController } from './campaign/campaign.controller';
+import { CampaignModule } from './campaign/campaign.module';
+import { CampaignService } from './campaign/campaign.service';
+import { ActiveCompanyGuard } from './common/guards/active-user-and-company.guard';
+import { ActiveUserGuard } from './common/guards/active-user.guard';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { CompanyModule } from './company/company.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RolesModule } from './roles/roles.module';
 import { UserModule } from './user/user.module';
-import { CampaignService } from './campaign/campaign.service';
-import { CampaignController } from './campaign/campaign.controller';
-import { CampaignModule } from './campaign/campaign.module';
 
 @Module({
   imports: [
@@ -25,7 +27,8 @@ import { CampaignModule } from './campaign/campaign.module';
     CampaignModule,
   ],
   controllers: [AppController, CampaignController],
-  providers: [AppService, CampaignService],
+  providers: [AppService, ActiveUserGuard, ActiveCompanyGuard, CampaignService],
+  exports: [ActiveUserGuard, ActiveCompanyGuard],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

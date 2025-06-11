@@ -6,9 +6,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
+import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { AllRoles } from 'src/common/constants/roles.constant';
 import { CanAssignRole } from 'src/common/decorators/can-assign-role.decorator';
-import { Permissions } from 'src/common/decorators/permissions.decorator';
+import { Secure } from 'src/common/decorators/secure.decorator';
 import { ApiResponse } from 'src/common/types/api-response.type';
 import {
   AuthRegisterDto,
@@ -36,9 +37,8 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
-  @UseGuards(AuthGuard)
   @Post('auth-register')
-  @Permissions('CREATE_USER')
+  @Secure('ACTIVE_USER', AllPermissions.CREATE_USER)
   @CanAssignRole()
   @ApiBody({
     description: 'Création de compte avec assignation de rôle contrôlée',

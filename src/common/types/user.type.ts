@@ -1,6 +1,6 @@
-import { Role } from '@prisma/client';
+import { Role, UserRole } from '@prisma/client';
 import { CompanyResponse } from './company.type';
-export enum UserRole {
+export enum UserRoles {
   DEVELOPER = 'DEVELOPER',
   OWNER = 'OWNER',
   PDG = 'PDG',
