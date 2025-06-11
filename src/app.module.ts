@@ -8,6 +8,9 @@ import { CompanyModule } from './company/company.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RolesModule } from './roles/roles.module';
 import { UserModule } from './user/user.module';
+import { CampaignService } from './campaign/campaign.service';
+import { CampaignController } from './campaign/campaign.controller';
+import { CampaignModule } from './campaign/campaign.module';
 
 @Module({
   imports: [
@@ -19,9 +22,10 @@ import { UserModule } from './user/user.module';
       isGlobal: true,
     }),
     RolesModule,
+    CampaignModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, CampaignController],
+  providers: [AppService, CampaignService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
