@@ -1,5 +1,15 @@
+import { CampaignStatus } from './campaign.dto';
 // campaign.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  errorResponse,
+  successResponse,
+} from 'src/common/helpers/api-response.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCampaignDto } from './campaign.dto';
 
@@ -8,40 +18,91 @@ export class CampaignService {
   constructor(private readonly prisma: PrismaService) {}
 
   create(dto: CreateCampaignDto) {
-    return this.prisma.campaign.create({
-      data: {
-        ...dto,
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
-        status: dto.status ?? 'CURRENT',
-      },
-    });
+    try {
+      const existCurrentCampaign = this.prisma.campaign.findFirst({
+        where: { status: CampaignStatus.CURRENT },
+      });
+
+      if (existCurrentCampaign)
+        throw new ConflictException(
+          'Une campagne est déjà en cours. Veuillez dabord la terminer',
+        );
+
+      const newCampaign = this.prisma.campaign.create({
+        data: {
+          ...dto,
+          startDate: new Date(dto.startDate),
+          endDate: new Date(dto.endDate),
+        },
+      });
+
+      return successResponse('Campagne créée avec succès', 201, newCampaign);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   findAll() {
-    return this.prisma.campaign.findMany();
+    try {
+      const campaigns = this.prisma.campaign.findMany();
+
+      return successResponse('Campagnes disponibles', 204, campaigns);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   findOne(id: string) {
-    return this.prisma.campaign.findUnique({ where: { id } });
+    try {
+      const campaign = this.prisma.campaign.findUnique({ where: { id } });
+
+      return successResponse('Campagnes disponibles', 204, campaign);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   async remove(id: string) {
-    const campaign = await this.findOne(id);
-    if (!campaign) throw new NotFoundException('Campagne introuvable');
-    return this.prisma.campaign.delete({ where: { id } });
+    try {
+      const campaign = await this.prisma.campaign.findUnique({ where: { id } });
+      if (!campaign) throw new NotFoundException('Campagne introuvable');
+
+      const campaignToRemove = await this.prisma.campaign.delete({
+        where: { id },
+      });
+      return successResponse(
+        'Campagne supprimée avec succès',
+        200,
+        campaignToRemove,
+      );
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   async update(id: string, dto: CreateCampaignDto) {
-    const campaign = await this.findOne(id);
-    if (!campaign) throw new NotFoundException('Campagne introuvable');
-    return this.prisma.campaign.update({
-      where: { id },
-      data: {
-        ...dto,
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
-      },
-    });
+    try {
+      const campaign = await this.prisma.campaign.findUnique({ where: { id } });
+      if (!campaign) throw new NotFoundException('Campagne introuvable');
+
+      if (campaign.status != CampaignStatus.CURRENT)
+        throw new ForbiddenException('Campagne déjà terminée');
+
+      const updatedCampaign = await this.prisma.campaign.update({
+        where: { id },
+        data: {
+          ...dto,
+          startDate: new Date(dto.startDate),
+          endDate: new Date(dto.endDate),
+        },
+      });
+      return successResponse(
+        'Campagne mise à jour avec succès',
+        200,
+        updatedCampaign,
+      );
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 }

@@ -1,5 +1,5 @@
 // dto/create-campaign.dto.ts
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export enum CampaignStatus {
   CURRENT = 'CURRENT',
@@ -11,6 +11,7 @@ export class CreateCampaignDto {
   name: string;
 
   @IsString()
+  @IsOptional()
   description: string;
 
   @IsDateString()
@@ -18,8 +19,4 @@ export class CreateCampaignDto {
 
   @IsDateString()
   endDate: string;
-
-  @IsOptional()
-  @IsEnum(CampaignStatus)
-  status?: CampaignStatus;
 }

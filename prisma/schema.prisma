@@ -125,14 +125,14 @@ model Company {
 // Campagnes
 
 model Campaign {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  startDate   DateTime
-  endDate     DateTime
-  status      CampaignStatus @default(CURRENT)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  startDate     DateTime
+  endDate       DateTime
+  status        CampaignStatus @default(CURRENT)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 enum CampaignStatus {
