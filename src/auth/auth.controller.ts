@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Patch,
   Post,
   UnauthorizedException,
   UseGuards,
@@ -84,7 +85,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('change-password')
+  @Patch('change-password')
   changePassword(@Body() dto: ChangePasswordDto, @AuthUser() user) {
     return this.authService.changePassword(dto, user.id);
   }

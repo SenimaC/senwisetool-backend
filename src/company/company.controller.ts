@@ -36,7 +36,7 @@ export class CompanyController {
     private companyService: CompanyService,
   ) {}
 
-  @Post('create')
+  @Post()
   @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -105,7 +105,7 @@ export class CompanyController {
     );
   }
 
-  @Post('create/location')
+  @Post('location')
   @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: 'Ajouter la localisation de la compagnie',
@@ -118,7 +118,7 @@ export class CompanyController {
     return this.companyService.createStepLocation(dto, user.id);
   }
 
-  @Post('create/contact')
+  @Post('contact')
   @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: 'Ajouter les contacts de la compagnie',
@@ -131,7 +131,7 @@ export class CompanyController {
     return this.companyService.createStepContact(dto, user.id);
   }
 
-  @Post('create/resend-email-verification')
+  @Post('resend-email-verification')
   @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: "Renvoie de l'email de la compagnie",
@@ -140,7 +140,7 @@ export class CompanyController {
     return this.companyService.resendEmailVerification(user.id);
   }
 
-  @Post('create/email-verification')
+  @Post('email-verification')
   @Secure('ACTIVE_USER', AllPermissions.CREATE_COMPANY)
   @ApiBody({
     description: "Verification de l'email de la compagnie",
@@ -153,7 +153,7 @@ export class CompanyController {
     return this.companyService.createStepEmailVerification(dto, user.id);
   }
 
-  @Post('validate-authorization')
+  @Patch('validate-authorization')
   @Secure('ACTIVE_USER', AllPermissions.VALIDATE_COMPANY)
   @ApiBody({
     description: "Valider la demande d'autorisation de création la compagnie",
@@ -163,7 +163,7 @@ export class CompanyController {
     return this.companyService.ValidateAutorization(dto);
   }
 
-  @Post('rejet-authorization')
+  @Patch('rejet-authorization')
   @Secure('ACTIVE_USER', AllPermissions.REJET_COMPANY)
   @ApiBody({
     description: "rejeter la demande d'autorisation de création la compagnie",
