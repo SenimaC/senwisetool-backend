@@ -139,3 +139,48 @@ enum CampaignStatus {
   CURRENT
   FINISHED
 }
+
+
+// requirements
+
+model Requirement {
+  id             String               @id @default(uuid())
+  number         Int                  @unique
+  description    String
+  sectionId      String
+  section        RequirementSection   @relation(fields: [sectionId], references: [id])
+  groups         RequirementGroup[]   @relation("RequirementToGroup")
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+model RequirementGroup {
+  id             String               @id @default(uuid())
+  name           String               @unique
+  description    String?
+  requirements   Requirement[]        @relation("RequirementToGroup")
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+model RequirementSection {
+  id             String               @id @default(uuid())
+  title          String
+  description    String?
+  number         Int                  @unique
+  chapterId      String
+  chapter        RequirementChapter   @relation(fields: [chapterId], references: [id])
+  requirements   Requirement[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+model RequirementChapter {
+  id             String               @id @default(uuid())
+  title          String
+  description    String?
+  number         Int                  @unique
+  sections       RequirementSection[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}

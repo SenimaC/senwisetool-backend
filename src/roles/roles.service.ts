@@ -19,7 +19,7 @@ export class RoleService {
         throw new Error(`Role with name ${dto.name} already exists`);
       }
 
-      const newRole = this.prisma.role.create({
+      const newRole = await this.prisma.role.create({
         data: { name: dto.name },
       });
 
@@ -31,7 +31,7 @@ export class RoleService {
 
   async assignPermissions(roleId: string, dto: { permissionIds: string[] }) {
     try {
-      const newAssign = this.prisma.role.update({
+      const newAssign = await this.prisma.role.update({
         where: { id: roleId },
         data: {
           permissions: {
@@ -52,7 +52,7 @@ export class RoleService {
 
   async getRoleById(roleId: string) {
     try {
-      const role = this.prisma.role.findUnique({
+      const role = await this.prisma.role.findUnique({
         where: { id: roleId },
         include: { permissions: true },
       });

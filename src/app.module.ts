@@ -10,6 +10,8 @@ import { ActiveCompanyGuard } from './common/guards/active-user-and-company.guar
 import { ActiveUserGuard } from './common/guards/active-user.guard';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { CompanyModule } from './company/company.module';
+import { RequirementModule } from './gestion/requirements/requirement.module';
+import { RequirementService } from './gestion/requirements/requirement.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { RolesModule } from './roles/roles.module';
 import { UserModule } from './user/user.module';
@@ -25,9 +27,16 @@ import { UserModule } from './user/user.module';
     }),
     RolesModule,
     CampaignModule,
+    RequirementModule,
   ],
   controllers: [AppController, CampaignController],
-  providers: [AppService, ActiveUserGuard, ActiveCompanyGuard, CampaignService],
+  providers: [
+    AppService,
+    ActiveUserGuard,
+    ActiveCompanyGuard,
+    CampaignService,
+    RequirementService,
+  ],
   exports: [ActiveUserGuard, ActiveCompanyGuard],
 })
 export class AppModule implements NestModule {
