@@ -145,7 +145,7 @@ enum CampaignStatus {
 
 model Requirement {
   id             String               @id @default(uuid())
-  number         Int                  @unique
+  number         String               @unique
   description    String
   sectionId      String
   section        RequirementSection   @relation(fields: [sectionId], references: [id])
@@ -167,7 +167,7 @@ model RequirementSection {
   id             String               @id @default(uuid())
   title          String
   description    String?
-  number         Int                  @unique
+  number         String                  @unique
   chapterId      String
   chapter        RequirementChapter   @relation(fields: [chapterId], references: [id])
   requirements   Requirement[]
