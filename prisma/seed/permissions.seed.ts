@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, SourceSecure } from '@prisma/client';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { RolePermissionsMap } from 'src/common/constants/role-permissions.map';
 import { AllRoles } from 'src/common/constants/roles.constant';
@@ -12,7 +12,7 @@ export async function seedPermissions(prisma: PrismaClient) {
       await prisma.permission.upsert({
         where: { name },
         update: {},
-        create: { name },
+        create: { name, from: SourceSecure.SYSTEM },
       });
     }),
   );
@@ -42,6 +42,7 @@ export async function seedPermissions(prisma: PrismaClient) {
         },
         create: {
           name: roleName,
+          from: SourceSecure.SYSTEM,
           permissions: {
             connect: permissionsToAssign,
           },

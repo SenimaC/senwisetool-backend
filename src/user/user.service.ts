@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { AllRoles } from 'src/common/constants/roles.constant';
 import {
   errorResponse,
   successResponse,
@@ -63,13 +68,55 @@ export class UserService {
   }
 
   async update(id: string, dto: UpdateUserDto) {
-    return this.prisma.user.update({
-      where: { id },
-      data: dto,
-    });
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          Role: true,
+        },
+      });
+
+      if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+      if (user.Role.name === AllRoles.LEAD_DEVELOPER) {
+        throw new UnauthorizedException(
+          'Vous ne pouvez pas modifier un utilisateur avec le rôle de Lead Developer',
+        );
+      }
+
+      const newUser = await this.prisma.user.update({
+        where: { id },
+        data: dto,
+      });
+
+      return successResponse('Utilisateur mis à jour', 200, newUser);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 
   async remove(id: string) {
-    return this.prisma.user.delete({ where: { id } });
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          Role: true,
+        },
+      });
+
+      if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+      if (user.Role.name === AllRoles.LEAD_DEVELOPER) {
+        throw new UnauthorizedException(
+          'Vous ne pouvez pas supprimer un utilisateur avec le rôle de Lead Developer',
+        );
+      }
+
+      this.prisma.user.delete({ where: { id } });
+
+      return successResponse('Utilisateur supprimé avec succès', 200);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 }

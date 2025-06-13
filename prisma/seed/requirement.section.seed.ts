@@ -32,8 +32,10 @@ export async function seedSections(
 
   const sections = await Promise.all(
     requirementSections.map(async (section) => {
-      return await prisma.requirementSection.create({
-        data: {
+      return await prisma.requirementSection.upsert({
+        where: { number: section.number },
+        update: {},
+        create: {
           ...section,
           chapter: {
             connect: {

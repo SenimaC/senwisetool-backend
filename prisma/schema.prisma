@@ -38,10 +38,16 @@ enum UserStatus {
   BANNED
 }
 
+enum SourceSecure {
+  SYSTEM
+  EXTERNAL
+}
+
 model Role {
   id          String       @id @default(cuid())
   name        String       @unique
   permissions Permission[] @relation("RolePermissions")
+  from        SourceSecure @default(EXTERNAL)
   users       User[]
   description String?
   createdAt   DateTime     @default(now())
@@ -53,6 +59,7 @@ model Permission {
   name          String  @unique
   roles         Role[]  @relation("RolePermissions")
   description   String?
+  from          SourceSecure @default(EXTERNAL)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

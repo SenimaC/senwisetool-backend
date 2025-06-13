@@ -436,9 +436,15 @@ export class AuthService {
    * @param userId - User's ID
    */
   async logout(userId: string) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: null },
-    });
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { refreshToken: null },
+      });
+
+      return successResponse('Déconnexion réussie', 200);
+    } catch (error) {
+      return errorResponse(error);
+    }
   }
 }

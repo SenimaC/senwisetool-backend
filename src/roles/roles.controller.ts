@@ -62,4 +62,76 @@ export class RolesController {
   ) {
     return this.roleService.assignPermissions(roleId, dto);
   }
+
+  // permission manager
+  @Post('permissions')
+  @ApiBody({ description: "Création d'une permission", type: String })
+  @ApiOperation({ summary: 'Créer une permission' })
+  async createPermission(@Body('permission') permission: string) {
+    return this.roleService.createPermission(permission);
+  }
+
+  @Patch('permissions/:id')
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la permission',
+    type: 'string',
+    example: 'uuid-permission',
+  })
+  @ApiBody({ description: "Modification d'une permission", type: String })
+  @ApiOperation({ summary: 'Modifier une permission' })
+  async updatePermission(
+    @Param('id') id: string,
+    @Body('permission') permission: string,
+  ) {
+    return this.roleService.updatePermission(id, permission);
+  }
+
+  @Delete('permissions/:id')
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la permission',
+    type: 'string',
+    example: 'uuid-permission',
+  })
+  @ApiOperation({ summary: 'Supprimer une permission' })
+  async deletePermission(@Param('id') id: string) {
+    return this.roleService.deletePermission(id);
+  }
+
+  @Get('permissions/:id')
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la permission',
+    type: 'string',
+    example: 'uuid-permission',
+  })
+  @ApiOperation({ summary: 'Récupérer une permission' })
+  async getPermission(@Param('id') id: string) {
+    return this.roleService.getPermission(id);
+  }
+
+  @Get(':id/permissions')
+  @ApiOperation({ summary: 'Récupérer les permissions d’un rôle' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID du rôle',
+    type: 'string',
+    example: 'uuid-role',
+  })
+  async getRolePermissions(@Param('id') roleId: string) {
+    return this.roleService.getRolePermissions(roleId);
+  }
+
+  @Delete(':id/permissions')
+  @ApiOperation({ summary: 'Retirer toutes les permissions d’un rôle' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID du rôle',
+    type: 'string',
+    example: 'uuid-role',
+  })
+  async removeAllPermissions(@Param('id') roleId: string) {
+    return this.roleService.removeAllPermissions(roleId);
+  }
 }

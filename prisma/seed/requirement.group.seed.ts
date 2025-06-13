@@ -23,8 +23,10 @@ export async function seedGroups(
 
   const groups = await Promise.all(
     requirementGroups.map(async (group) => {
-      return await prisma.requirementGroup.create({
-        data: { ...group },
+      return await prisma.requirementGroup.upsert({
+        where: { name: group.name },
+        update: {},
+        create: group,
       });
     }),
   );

@@ -62,8 +62,10 @@ export async function seedChapters(
 
   const chapters = await Promise.all(
     requirementChapters.map(async (chapter) => {
-      return await prisma.requirementChapter.create({
-        data: { ...chapter },
+      return await prisma.requirementChapter.upsert({
+        where: { number: chapter.number },
+        update: {},
+        create: chapter,
       });
     }),
   );

@@ -37,8 +37,10 @@ export async function seedRequirements(
     requirements.map(async (requirement) => {
       const numberParts = requirement.number.split('.');
       const sectionNumber = numberParts.slice(0, -1).join('.');
-      return await prisma.requirement.create({
-        data: {
+      return await prisma.requirement.upsert({
+        where: { number: requirement.number },
+        update: {},
+        create: {
           number: requirement.number,
           description: requirement.description ?? '',
           section: {

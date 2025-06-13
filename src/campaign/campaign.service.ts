@@ -17,7 +17,7 @@ import { CreateCampaignDto } from './campaign.dto';
 export class CampaignService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreateCampaignDto) {
+  async create(dto: CreateCampaignDto) {
     try {
       const existCurrentCampaign = this.prisma.campaign.findFirst({
         where: { status: CampaignStatus.CURRENT },
@@ -28,12 +28,8 @@ export class CampaignService {
           'Une campagne est déjà en cours. Veuillez dabord la terminer',
         );
 
-      const newCampaign = this.prisma.campaign.create({
-        data: {
-          ...dto,
-          startDate: new Date(dto.startDate),
-          endDate: new Date(dto.endDate),
-        },
+      const newCampaign = await this.prisma.campaign.create({
+        data: dto,
       });
 
       return successResponse('Campagne créée avec succès', 201, newCampaign);
@@ -42,9 +38,9 @@ export class CampaignService {
     }
   }
 
-  findAll() {
+  async findAll() {
     try {
-      const campaigns = this.prisma.campaign.findMany();
+      const campaigns = await this.prisma.campaign.findMany();
 
       return successResponse('Campagnes disponibles', 204, campaigns);
     } catch (error) {
@@ -52,9 +48,9 @@ export class CampaignService {
     }
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     try {
-      const campaign = this.prisma.campaign.findUnique({ where: { id } });
+      const campaign = await this.prisma.campaign.findUnique({ where: { id } });
 
       return successResponse('Campagnes disponibles', 204, campaign);
     } catch (error) {
