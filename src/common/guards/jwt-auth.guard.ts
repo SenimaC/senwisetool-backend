@@ -60,7 +60,6 @@ export class AuthGuard extends JwtAuthGuard('jwt') {
       const hasAll = requiredPermissions.every((perm) =>
         userPermissions.some((userPerm) => userPerm.name === perm),
       );
-      console.log('userPermissions ', userPermissions);
 
       if (!hasAll) {
         throw new ForbiddenException('Permissions insuffisantes');

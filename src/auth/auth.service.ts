@@ -276,7 +276,7 @@ export class AuthService {
       if (!user.isEmailVerified) {
         const userVerified = await this.prisma.user.update({
           where: { email: user.email },
-          data: { isEmailVerified: true },
+          data: { isEmailVerified: true, status: 'ACTIVE' },
         });
 
         if (!userVerified)
@@ -285,11 +285,7 @@ export class AuthService {
           );
       }
 
-      const pwdChanged = await this.changeCurrentPassword(
-        dto.currentPassword,
-        dto.newPassword,
-        email,
-      );
+      const pwdChanged = await this.changeCurrentPassword({ ...dto, email });
 
       if (pwdChanged.error) {
         throw new BadRequestException(pwdChanged.message);
@@ -320,11 +316,7 @@ export class AuthService {
       if (!(await bcrypt.compare(dto.currentPassword, user.password)))
         throw new ForbiddenException('Current password is not correct');
 
-      const pwdChanged = await this.changeCurrentPassword(
-        dto.currentPassword,
-        dto.newPassword,
-        dto.email,
-      );
+      const pwdChanged = await this.changeCurrentPassword(dto);
 
       if (pwdChanged.error) {
         throw new BadRequestException(pwdChanged.message);
@@ -472,23 +464,19 @@ export class AuthService {
     }
   }
 
-  private changeCurrentPassword = async (
-    currentPassword: string,
-    newPassword: string,
-    email: string,
-  ) => {
+  private changeCurrentPassword = async (dto: ChangePasswordDto) => {
     try {
       const user = await this.prisma.user.findUnique({
-        where: { email },
+        where: { email: dto.email },
       });
       if (!user) throw new NotFoundException('Utilisateur introuvable');
 
-      if (!(await bcrypt.compare(currentPassword, user.password)))
+      if (!(await bcrypt.compare(dto.currentPassword, user.password)))
         throw new ForbiddenException(
           'Votre mot de passe courant is not correct',
         );
 
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
       if (!user.isEmailVerified) {
         const userVerified = await this.prisma.user.update({
           where: { email: user.email },
