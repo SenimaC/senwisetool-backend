@@ -16,13 +16,13 @@ export const requirements: RequirementType[] = [
     number: '1.1.1',
     description:
       'Le système doit permettre de créer un nouveau compte avec email et mot de passe.',
-    groups: ['Section Création de compte'],
+    groups: ['Groupe Notifications', 'Groupe Authentification'],
   },
   {
     number: '2.1.1',
     description:
       'Le système doit permettre à un utilisateur de se connecter avec ses identifiants.',
-    groups: ['Section Connexion', 'Section Création de compte'],
+    groups: ['Groupe Interface Utilisateur', 'Groupe Notifications'],
   },
 ];
 

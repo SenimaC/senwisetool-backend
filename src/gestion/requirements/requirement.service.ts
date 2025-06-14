@@ -36,7 +36,15 @@ export class RequirementService {
     try {
       const chapters = await this.prisma.requirementChapter.findMany({
         include: {
-          sections: true,
+          sections: {
+            include: {
+              requirements: {
+                include: {
+                  groups: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -51,7 +59,15 @@ export class RequirementService {
       const chapters = await this.prisma.requirementChapter.findUnique({
         where: { id },
         include: {
-          sections: true,
+          sections: {
+            include: {
+              requirements: {
+                include: {
+                  groups: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -112,7 +128,12 @@ export class RequirementService {
     try {
       const sections = await this.prisma.requirementSection.findMany({
         include: {
-          requirements: true,
+          chapter: true,
+          requirements: {
+            include: {
+              groups: true,
+            },
+          },
         },
       });
 
@@ -127,7 +148,12 @@ export class RequirementService {
       const sections = await this.prisma.requirementSection.findUnique({
         where: { id },
         include: {
-          requirements: true,
+          chapter: true,
+          requirements: {
+            include: {
+              groups: true,
+            },
+          },
         },
       });
 
@@ -287,6 +313,7 @@ export class RequirementService {
           requirements: true,
         },
       });
+      console.log('groups : ', groups);
 
       return successResponse('Groups retrieved successfully', 200, groups);
     } catch (error) {

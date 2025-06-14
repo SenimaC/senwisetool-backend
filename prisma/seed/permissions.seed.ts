@@ -58,6 +58,6 @@ export async function seedPermissions(prisma: PrismaClient) {
   console.log(
     '✅ Permissions seeded:',
     allPermissions.length + '\n permissions map:',
-    permissionMap,
+    permissionMap.length,
   );
 }
