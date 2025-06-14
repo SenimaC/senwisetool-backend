@@ -141,8 +141,8 @@ export class AuthService {
       if (!user) throw new NotFoundException('Utilisateur introuvable');
 
       return successResponse('Connexion réussie', 201, {
-        accessToken: tokens.data.access_token,
-        refreshToken: tokens.data.refresh_token,
+        accessToken: tokens.data.accessToken,
+        refreshToken: tokens.data.refreshToken,
         user: userData.data,
       });
     } catch (error) {
@@ -310,7 +310,7 @@ export class AuthService {
   async generateTokens(userId: string) {
     try {
       const payload = { sub: userId };
-      const [access_token, refresh_token] = await Promise.all([
+      const [accessToken, refreshToken] = await Promise.all([
         this.jwtService.signAsync(payload, {
           secret: process.env.JWT_SECRET,
           expiresIn: '1h',
@@ -321,15 +321,15 @@ export class AuthService {
         }),
       ]);
 
-      const hash = await bcrypt.hash(refresh_token, 10);
+      const hash = await bcrypt.hash(refreshToken, 10);
       await this.prisma.user.update({
         where: { id: userId },
         data: { refreshToken: hash },
       });
 
       return successResponse('Tokens générés avec succes', 201, {
-        access_token,
-        refresh_token,
+        accessToken,
+        refreshToken,
       });
     } catch (error) {
       return errorResponse(error);
