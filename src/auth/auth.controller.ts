@@ -4,7 +4,6 @@ import {
   Patch,
   Post,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
@@ -22,7 +21,6 @@ import {
   VerifyEmailDto,
 } from 'src/user/user.dto';
 import { AuthUser } from '../common/decorators/auth-user.decorator';
-import { AuthGuard } from '../common/guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -84,7 +82,7 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
-  @UseGuards(AuthGuard)
+  @Secure('CONNECTED', AllPermissions.CREATE_USER)
   @Patch('change-password')
   changePassword(@Body() dto: ChangePasswordDto, @AuthUser() user) {
     return this.authService.changePassword(dto, user.id);
@@ -95,8 +93,8 @@ export class AuthController {
     return this.authService.refreshTokens(dto.refreshToken);
   }
 
-  @UseGuards(AuthGuard)
   @Post('logout')
+  @Secure('CONNECTED', AllPermissions.CREATE_USER)
   logout(@AuthUser() user) {
     return this.authService.logout(user.id);
   }
