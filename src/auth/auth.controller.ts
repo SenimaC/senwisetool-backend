@@ -18,6 +18,7 @@ import {
   RefreshTokenDto,
   RegisterDto,
   resendEmailVerificationDto,
+  ValidateAccountDto,
   VerifyEmailDto,
 } from 'src/user/user.dto';
 import { AuthUser } from '../common/decorators/auth-user.decorator';
@@ -82,7 +83,17 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
-  @Secure('CONNECTED', AllPermissions.CREATE_USER)
+  @Secure('CONNECTED')
+  @Patch('validate-account')
+  @ApiBody({
+    description: 'Validation du compte utilisateur',
+    type: ValidateAccountDto,
+  })
+  validateAccount(@Body() dto: ValidateAccountDto, @AuthUser() user) {
+    return this.authService.validateAccount(dto, user.email, user.id);
+  }
+
+  @Secure('ACTIVE_USER')
   @Patch('change-password')
   changePassword(@Body() dto: ChangePasswordDto, @AuthUser() user) {
     return this.authService.changePassword(dto, user.id);

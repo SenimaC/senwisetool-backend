@@ -26,6 +26,7 @@ import {
   LoginDto,
   RegisterDto,
   resendEmailVerificationDto,
+  ValidateAccountDto,
   VerifyEmailDto,
 } from 'src/user/user.dto';
 import { UserService } from 'src/user/user.service';
@@ -175,11 +176,6 @@ export class AuthService {
    */
   async resendEmailVerification(dto: resendEmailVerificationDto) {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: { email: dto.email },
-      });
-      if (!user) throw new NotFoundException('Utilisateur introuvable');
-
       const code = generate6DigitCode;
       await this.mailService.sendEmailVerificationCode(
         dto.email,
@@ -266,6 +262,54 @@ export class AuthService {
    * @param id - User's ID
    * @returns ApiResponse with success message and status code
    */
+  async validateAccount(dto: ValidateAccountDto, email: string, id: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id, email },
+      });
+      if (!user) throw new NotFoundException('User not found');
+
+      const tokens = await this.generateTokens(user.id);
+
+      const userData = await this.userService.getUser(user.id);
+
+      if (!user.isEmailVerified) {
+        const userVerified = await this.prisma.user.update({
+          where: { email: user.email },
+          data: { isEmailVerified: true },
+        });
+
+        if (!userVerified)
+          throw new Error(
+            "Erreur lors de la vérification de l'email de l'utilisateur",
+          );
+      }
+
+      const pwdChanged = await this.changeCurrentPassword(
+        dto.currentPassword,
+        dto.newPassword,
+        email,
+      );
+
+      if (pwdChanged.error) {
+        throw new BadRequestException(pwdChanged.message);
+      }
+
+      return successResponse('🟢 Votre compte est opérationnel', 200, {
+        ...tokens,
+        user: userData.data,
+      });
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
+  /**
+   * Change user's password
+   * @param dto - Data transfer object containing current and new passwords
+   * @param id - User's ID
+   * @returns ApiResponse with success message and status code
+   */
   async changePassword(dto: ChangePasswordDto, id: string) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -276,27 +320,24 @@ export class AuthService {
       if (!(await bcrypt.compare(dto.currentPassword, user.password)))
         throw new ForbiddenException('Current password is not correct');
 
-      const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-      if (!user.isEmailVerified) {
-        const userVerified = await this.prisma.user.update({
-          where: { email: user.email },
-          data: { password: hashedPassword, isEmailVerified: true },
-        });
+      const pwdChanged = await this.changeCurrentPassword(
+        dto.currentPassword,
+        dto.newPassword,
+        dto.email,
+      );
 
-        if (!userVerified)
-          throw new Error(
-            "Erreur lors de la vérification de l'email de l'utilisateur",
-          );
-
-        const tokens = await this.generateTokens(user.id);
-
-        const userData = await this.userService.getUser(user.id);
-
-        return successResponse('🟢 Votre compte est opérationnel', 200, {
-          ...tokens,
-          user: userData.data,
-        });
+      if (pwdChanged.error) {
+        throw new BadRequestException(pwdChanged.message);
       }
+
+      const tokens = await this.generateTokens(user.id);
+
+      const userData = await this.userService.getUser(user.id);
+
+      return successResponse('Mot de passe modifié avec succès', 201, {
+        ...tokens,
+        user: userData.data,
+      });
     } catch (error) {
       return errorResponse(error);
     }
@@ -430,6 +471,41 @@ export class AuthService {
       return errorResponse(error);
     }
   }
+
+  private changeCurrentPassword = async (
+    currentPassword: string,
+    newPassword: string,
+    email: string,
+  ) => {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+      if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+      if (!(await bcrypt.compare(currentPassword, user.password)))
+        throw new ForbiddenException(
+          'Votre mot de passe courant is not correct',
+        );
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      if (!user.isEmailVerified) {
+        const userVerified = await this.prisma.user.update({
+          where: { email: user.email },
+          data: { password: hashedPassword, isEmailVerified: true },
+        });
+
+        if (!userVerified)
+          throw new Error(
+            "Erreur lors de la vérification de l'email de l'utilisateur",
+          );
+      }
+
+      return successResponse('Mot de passe changé avec succès', 200);
+    } catch (error) {
+      return errorResponse(error);
+    }
+  };
 
   /**
    * Logout user by clearing the refresh token
