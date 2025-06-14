@@ -6,15 +6,12 @@ import {
   Param,
   Patch,
   Request,
-  UseGuards,
 } from '@nestjs/common';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { Secure } from 'src/common/decorators/secure.decorator';
-import { AuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { UpdateUserDto } from './user.dto';
 import { UserService } from './user.service';
 
-@UseGuards(AuthGuard)
 @Secure('ACTIVE_USER', AllPermissions.USER_MANAGER)
 @Controller('users')
 export class UserController {
