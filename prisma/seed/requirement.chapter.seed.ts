@@ -3,55 +3,40 @@ import { CreateRequirementChapterDto } from '../../src/gestion/requirements/requ
 
 const requirementChapters: CreateRequirementChapterDto[] = [
   {
-    title: 'Chapitre 1 - Gestion des utilisateurs',
+    title: 'Gestion',
     description:
-      'Ce chapitre couvre les fonctionnalités liées à la gestion des comptes utilisateurs.',
+      'Gestion : Ce chapitre couvre la gestion organisationnelle, administrative, l’évaluation des risques, l’auto-évaluation, les mécanismes de réclamation, l’égalité des genres et l’implication des jeunes travailleurs.',
     number: 1,
   },
   {
-    title: 'Chapitre 2 - Authentification et sécurité',
+    title: 'Traçabilité',
     description:
-      'Comprend les exigences de connexion, sécurité et permissions.',
+      'Traçabilité : Ce chapitre traite de la traçabilité des produits, du suivi des volumes certifiés, de la plateforme en ligne et du bilan massique.',
     number: 2,
   },
   {
-    title: 'Chapitre 3 - Interface utilisateur',
-    description: 'Décrit les exigences relatives à l’expérience utilisateur.',
+    title: 'Revenu et responsabilité partagées',
+    description:
+      'Revenu et responsabilité partagées : Ce chapitre aborde les coûts de production, le revenu vital, le différentiel de durabilité et les investissements pour la durabilité.',
     number: 3,
   },
   {
-    title: 'Chapitre 4 - Base de données',
-    description: 'Inclut la gestion des données persistantes.',
+    title: 'Agriculture',
+    description:
+      'Agriculture : Ce chapitre regroupe les exigences sur la plantation, la rotation, la gestion des sols, la lutte intégrée contre les ravageurs, la gestion des produits agrochimiques et les pratiques de récolte.',
     number: 4,
   },
   {
-    title: 'Chapitre 5 - Performances',
+    title: 'Social',
+    description:
+      'Social : Ce chapitre couvre les aspects sociaux, y compris le travail des enfants, la discrimination, la liberté d’association, les salaires, la santé et sécurité, les conditions de logement et les relations avec les communautés.',
     number: 5,
   },
   {
-    title: 'Chapitre 6 - Notifications',
-    description: 'Gestion des notifications email et en temps réel.',
+    title: 'Environnement',
+    description:
+      'Environnement : Ce chapitre traite de la protection des forêts, de la biodiversité, de la gestion de l’eau, des déchets, de l’efficacité énergétique et de la réduction des gaz à effet de serre.',
     number: 6,
-  },
-  {
-    title: 'Chapitre 7 - Gestion des rôles',
-    description: 'Définit les différents rôles utilisateurs.',
-    number: 7,
-  },
-  {
-    title: 'Chapitre 8 - Journalisation',
-    description: 'Suivi des actions utilisateurs pour audit.',
-    number: 8,
-  },
-  {
-    title: 'Chapitre 9 - API',
-    description: 'Spécifications pour les points de terminaison API.',
-    number: 9,
-  },
-  {
-    title: 'Chapitre 10 - Tests & Qualité',
-    description: 'Exigences pour garantir la qualité du code.',
-    number: 10,
   },
 ];
 

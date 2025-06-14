@@ -6,8 +6,6 @@ import { AuthModule } from './auth/auth.module';
 import { CampaignController } from './campaign/campaign.controller';
 import { CampaignModule } from './campaign/campaign.module';
 import { CampaignService } from './campaign/campaign.service';
-import { ActiveCompanyGuard } from './common/guards/active-user-and-company.guard';
-import { ActiveUserGuard } from './common/guards/active-user.guard';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { CompanyModule } from './company/company.module';
 import { RequirementModule } from './gestion/requirements/requirement.module';
@@ -30,14 +28,7 @@ import { UserModule } from './user/user.module';
     RequirementModule,
   ],
   controllers: [AppController, CampaignController],
-  providers: [
-    AppService,
-    ActiveUserGuard,
-    ActiveCompanyGuard,
-    CampaignService,
-    RequirementService,
-  ],
-  exports: [ActiveUserGuard, ActiveCompanyGuard],
+  providers: [AppService, CampaignService, RequirementService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -43,7 +43,7 @@ export class CompanyController {
       { name: 'logo', maxCount: 1 },
       { name: 'authorization', maxCount: 1 },
     ]),
-  ) // ≤ 2 fichiers : [logo, authorization]
+  )
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Créer une compagnie (logo + autorisation)',
