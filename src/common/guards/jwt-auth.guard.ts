@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard as JwtAuthGuard } from '@nestjs/passport';
+import { SourceSecure } from '@prisma/client';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { ReflectorKey } from '../constants/reflector-key';
 
@@ -52,11 +53,14 @@ export class AuthGuard extends JwtAuthGuard('jwt') {
     );
 
     if (requiredPermissions?.length) {
-      const userPermissions = user.permissions || [];
+      const userPermissions = (user.Role.permissions || []).filter(
+        (perm) => perm.from === SourceSecure.SYSTEM,
+      );
 
       const hasAll = requiredPermissions.every((perm) =>
-        userPermissions.includes(perm),
+        userPermissions.some((userPerm) => userPerm.name === perm),
       );
+      console.log('userPermissions ', userPermissions);
 
       if (!hasAll) {
         throw new ForbiddenException('Permissions insuffisantes');
