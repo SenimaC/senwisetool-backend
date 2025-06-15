@@ -262,39 +262,27 @@ export class AuthService {
    * @param id - User's ID
    * @returns ApiResponse with success message and status code
    */
-  async validateAccount(dto: ValidateAccountDto, email: string, id: string) {
+  async validateAccount(dto: ValidateAccountDto, email: string) {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: { id, email },
-      });
-      if (!user) throw new NotFoundException('User not found');
-
-      const tokens = await this.generateTokens(user.id);
-
-      const userData = await this.userService.getUser(user.id);
-
-      if (!user.isEmailVerified) {
-        const userVerified = await this.prisma.user.update({
-          where: { email: user.email },
-          data: { isEmailVerified: true, status: 'ACTIVE' },
-        });
-
-        if (!userVerified)
-          throw new Error(
-            "Erreur lors de la vérification de l'email de l'utilisateur",
-          );
-      }
-
       const pwdChanged = await this.changeCurrentPassword({ ...dto, email });
 
       if (pwdChanged.error) {
         throw new BadRequestException(pwdChanged.message);
       }
 
-      return successResponse('🟢 Votre compte est opérationnel', 200, {
-        ...tokens,
-        user: userData.data,
+      const userVerified = await this.prisma.user.update({
+        where: { email: email },
+        data: { isEmailVerified: true, status: 'ACTIVE' },
       });
+
+      if (!userVerified)
+        throw new Error(
+          "Erreur lors de la vérification de l'email de l'utilisateur",
+        );
+
+      this.logout(userVerified.id);
+
+      return successResponse('🟢 Votre compte est opérationnel', 200);
     } catch (error) {
       return errorResponse(error);
     }
@@ -477,17 +465,22 @@ export class AuthService {
         );
 
       const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-      if (!user.isEmailVerified) {
-        const userVerified = await this.prisma.user.update({
-          where: { email: user.email },
-          data: { password: hashedPassword, isEmailVerified: true },
-        });
+      // if (!user.isEmailVerified) {
+      //   const userVerified = await this.prisma.user.update({
+      //     where: { email: user.email },
+      //     data: { password: hashedPassword },
+      //   });
 
-        if (!userVerified)
-          throw new Error(
-            "Erreur lors de la vérification de l'email de l'utilisateur",
-          );
-      }
+      //   if (!userVerified)
+      //     throw new Error(
+      //       "Erreur lors de la vérification de l'email de l'utilisateur",
+      //     );
+      // }
+
+      await this.prisma.user.update({
+        where: { email: user.email },
+        data: { password: hashedPassword },
+      });
 
       return successResponse('Mot de passe changé avec succès', 200);
     } catch (error) {

@@ -34,17 +34,17 @@ export class AuthGuard extends JwtAuthGuard('jwt') {
     );
 
     // 👇 Vérifications liées au niveau de sécurité
-    if (secureLevel === 'ACTIVE_USER' && user.status !== 'ACTIVE') {
-      throw new ForbiddenException('Utilisateur inactif');
-    }
-
-    if (secureLevel === 'ACTIVE_COMPANY') {
-      if (user.status !== 'ACTIVE') {
+    if (secureLevel === 'ACTIVE_USER')
+      if (!user.isEmailVerified || user.status !== 'ACTIVE') {
         throw new ForbiddenException('Utilisateur inactif');
       }
-      if (!user.company || user.company.status !== 'ACTIVE') {
+
+    if (secureLevel === 'ACTIVE_COMPANY') {
+      if (!user.isEmailVerified || user.status !== 'ACTIVE')
+        throw new ForbiddenException('Utilisateur inactif');
+
+      if (!user.company || user.company.status !== 'ACTIVE')
         throw new ForbiddenException('Compagnie inactive');
-      }
     }
 
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(

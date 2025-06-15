@@ -90,7 +90,7 @@ export class AuthController {
     type: ValidateAccountDto,
   })
   validateAccount(@Body() dto: ValidateAccountDto, @AuthUser() user) {
-    return this.authService.validateAccount(dto, user.email, user.id);
+    return this.authService.validateAccount(dto, user.email);
   }
 
   @Secure('ACTIVE_USER')
