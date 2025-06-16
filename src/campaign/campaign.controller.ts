@@ -7,17 +7,14 @@ import {
   Param,
   Post,
   Put,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateCampaignDto } from './campaign.dto';
 import { CampaignService } from './campaign.service';
 
 @ApiTags('Campaign')
 @Controller('campaigns')
-@UseGuards(RolesGuard)
 export class CampaignController {
   constructor(private readonly campaignService: CampaignService) {}
 

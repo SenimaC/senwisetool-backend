@@ -22,6 +22,8 @@ export class RequirementService {
   // ✅ CHAPTER
   async createChapter(dto: CreateRequirementChapterDto) {
     try {
+      if (dto.number) await this.chapterExist(dto.number);
+
       const newChapter = await this.prisma.requirementChapter.create({
         data: dto,
       });
@@ -79,6 +81,8 @@ export class RequirementService {
 
   async updateChapter(id: string, dto: UpdateRequirementChapterDto) {
     try {
+      if (dto.number) await this.chapterExist(dto.number);
+
       const chapterUpdated = await this.prisma.requirementChapter.update({
         where: { id },
         data: dto,
@@ -96,6 +100,25 @@ export class RequirementService {
 
   async deleteChapter(id: string) {
     try {
+      // Delete all sections (and their requirements) related to this chapter
+      const sections = await this.prisma.requirementSection.findMany({
+        where: { chapterId: id },
+        select: { id: true },
+      });
+
+      for (const section of sections) {
+        // Delete requirements under each section
+        await this.prisma.requirement.deleteMany({
+          where: { sectionId: section.id },
+        });
+      }
+
+      // Delete all sections under the chapter
+      await this.prisma.requirementSection.deleteMany({
+        where: { chapterId: id },
+      });
+
+      // Now delete the chapter
       const chapterDeleted = await this.prisma.requirementChapter.delete({
         where: { id },
       });
@@ -113,7 +136,8 @@ export class RequirementService {
   // ✅ SECTION
   async createSection(dto: CreateRequirementSectionDto) {
     try {
-      await this.ensureChapterExists(dto.chapterId);
+      if (dto.number) await this.sectionExist(dto.number);
+
       const newSection = await this.prisma.requirementSection.create({
         data: dto,
       });
@@ -165,6 +189,8 @@ export class RequirementService {
 
   async updateSection(id: string, dto: UpdateRequirementSectionDto) {
     try {
+      if (dto.number) await this.sectionExist(dto.number);
+
       const sectionUpdated = await this.prisma.requirementSection.update({
         where: { id },
         data: dto,
@@ -182,6 +208,12 @@ export class RequirementService {
 
   async deleteSection(id: string) {
     try {
+      // Delete all requirements under this section (and their group relations if needed)
+      await this.prisma.requirement.deleteMany({
+        where: { sectionId: id },
+      });
+
+      // Now delete the section itself
       const sectionDeleted = await this.prisma.requirementSection.delete({
         where: { id },
       });
@@ -199,11 +231,12 @@ export class RequirementService {
   // ✅ REQUIREMENT
   async createRequirement(dto: CreateRequirementDto) {
     try {
-      await this.ensureSectionExists(dto.sectionId);
+      if (dto.number) await this.sectionExist(dto.number);
+
       const newRequirement = await this.prisma.requirement.create({
         data: {
           ...dto,
-          groups: { connect: [] },
+          groups: { connect: dto.groupIds?.map((id) => ({ id })) },
         },
       });
 
@@ -258,6 +291,8 @@ export class RequirementService {
 
   async updateRequirement(id: string, dto: UpdateRequirementDto) {
     try {
+      if (dto.number) await this.sectionExist(dto.number);
+
       const requirementUpdated = await this.prisma.requirement.update({
         where: { id },
         data: dto,
@@ -292,6 +327,8 @@ export class RequirementService {
   // ✅ GROUP
   async createGroup(dto: CreateRequirementGroupDto) {
     try {
+      if (dto.name) await this.sectionExist(dto.name);
+
       const newGroup = await this.prisma.requirementGroup.create({
         data: dto,
       });
@@ -338,6 +375,8 @@ export class RequirementService {
 
   async updateGroup(id: string, dto: UpdateRequirementGroupDto) {
     try {
+      if (dto.name) await this.sectionExist(dto.name);
+
       const groupUpdated = await this.prisma.requirementGroup.update({
         where: { id },
         data: dto,
@@ -370,17 +409,31 @@ export class RequirementService {
   }
 
   // ✅ Utilities
-  private async ensureChapterExists(id: string) {
+  private async chapterExist(number: number) {
     const chapter = await this.prisma.requirementChapter.findUnique({
-      where: { id },
+      where: { number },
     });
-    if (!chapter) throw new NotFoundException('Chapter not found');
+    if (chapter) throw new NotFoundException('Chapter already exist');
   }
 
-  private async ensureSectionExists(id: string) {
+  private async sectionExist(number: string) {
     const section = await this.prisma.requirementSection.findUnique({
-      where: { id },
+      where: { number },
     });
-    if (!section) throw new NotFoundException('Section not found');
+    if (!section) throw new NotFoundException('Section already exist');
+  }
+
+  private async groupExist(name: string) {
+    const section = await this.prisma.requirementGroup.findUnique({
+      where: { name },
+    });
+    if (!section) throw new NotFoundException('Section already exist');
+  }
+
+  private async requirementExist(number: string) {
+    const section = await this.prisma.requirement.findUnique({
+      where: { number },
+    });
+    if (!section) throw new NotFoundException('Section already exist');
   }
 }

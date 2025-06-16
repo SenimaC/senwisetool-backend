@@ -33,7 +33,7 @@ export class AuthGuard extends JwtAuthGuard('jwt') {
       [context.getHandler(), context.getClass()],
     );
 
-    // 👇 Vérifications liées au niveau de sécurité
+    // 👇 Vérifications liées au niveau de sécurité via secure level
     if (secureLevel === 'ACTIVE_USER')
       if (!user.isEmailVerified || user.status !== 'ACTIVE') {
         throw new ForbiddenException('Utilisateur inactif');
@@ -63,6 +63,18 @@ export class AuthGuard extends JwtAuthGuard('jwt') {
 
       if (!hasAll) {
         throw new ForbiddenException('Permissions insuffisantes');
+      }
+    }
+
+    const roles = this.reflector.getAllAndOverride<string[]>(
+      ReflectorKey.ROLES,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (roles?.length) {
+      const userRole = user.Role?.name;
+      if (!roles.includes(userRole)) {
+        throw new UnauthorizedException('Accès interdit. Rôle insuffisant');
       }
     }
 

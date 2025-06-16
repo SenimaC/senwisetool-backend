@@ -8,11 +8,13 @@ import { CampaignModule } from './campaign/campaign.module';
 import { CampaignService } from './campaign/campaign.service';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { CompanyModule } from './company/company.module';
+import { InspectionController } from './gestion/inspection/inspection.controller';
 import { RequirementModule } from './gestion/requirements/requirement.module';
 import { RequirementService } from './gestion/requirements/requirement.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { RolesModule } from './roles/roles.module';
 import { UserModule } from './user/user.module';
+import { InspectionModule } from './gestion/inspection/inspection.module';
 
 @Module({
   imports: [
@@ -26,8 +28,9 @@ import { UserModule } from './user/user.module';
     RolesModule,
     CampaignModule,
     RequirementModule,
+    InspectionModule,
   ],
-  controllers: [AppController, CampaignController],
+  controllers: [AppController, CampaignController, InspectionController],
   providers: [AppService, CampaignService, RequirementService],
 })
 export class AppModule implements NestModule {

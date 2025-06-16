@@ -105,7 +105,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  @Secure('CONNECTED', AllPermissions.CREATE_USER)
+  @Secure('CONNECTED')
   logout(@AuthUser() user) {
     return this.authService.logout(user.id);
   }

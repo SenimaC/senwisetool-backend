@@ -15,4 +15,6 @@ export const AllPermissions = {
 
   USER_MANAGER: 'USER_MANAGER',
   ROLE_MANAGER: 'ROLE_MANAGER',
+
+  MANAGE_INSPECTION: 'MANAGE_INSPECTION',
 } as const;

@@ -262,6 +262,24 @@ export class RoleService {
     }
   }
 
+  async getPermissions() {
+    try {
+      const permissions = await this.prisma.permission.findMany({
+        include: {
+          roles: true,
+        },
+      });
+
+      return successResponse(
+        'Permissions retrieved successfully',
+        200,
+        permissions,
+      );
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
   async getPermission(id: string) {
     try {
       if (!id || typeof id !== 'string') {

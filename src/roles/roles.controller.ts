@@ -6,18 +6,15 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { Secure } from 'src/common/decorators/secure.decorator';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AssignPermissionsDto, CreateRoleDto, UpdateRoleDto } from './role.dto';
 import { RoleService } from './roles.service';
 
 @Controller('roles')
 @Secure('ACTIVE_USER', AllPermissions.ROLE_MANAGER)
-@UseGuards(RolesGuard)
 // @Roles('LEAD_DEVELOPER') // ⬅️ tous les endpoints doivent avoir ce rôle minimum
 export class RolesController {
   constructor(private readonly roleService: RoleService) {}
@@ -97,6 +94,12 @@ export class RolesController {
   @ApiOperation({ summary: 'Supprimer une permission' })
   async deletePermission(@Param('id') id: string) {
     return this.roleService.deletePermission(id);
+  }
+
+  @Get('permissions')
+  @ApiOperation({ summary: 'Liste de toutes les permissions' })
+  async getPermissions() {
+    return this.roleService.getPermissions();
   }
 
   @Get('permissions/:id')

@@ -29,9 +29,13 @@ export const RolePermissionsMap: Record<string, string[]> = {
     AllPermissions.CREATE_COMPANY,
     AllPermissions.VIEW_SELF_COMPANY,
     AllPermissions.UPDATE_SELF_COMPANY,
+    AllPermissions.MANAGE_INSPECTION,
   ],
 
-  [AllRoles.ADG]: [AllPermissions.VIEW_SELF_COMPANY],
+  [AllRoles.ADG]: [
+    AllPermissions.VIEW_SELF_COMPANY,
+    AllPermissions.MANAGE_INSPECTION,
+  ],
 
   [AllRoles.ASSISTANT]: [AllPermissions.VIEW_SELF_COMPANY],
 };

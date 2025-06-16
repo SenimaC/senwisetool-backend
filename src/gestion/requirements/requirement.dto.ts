@@ -1,6 +1,12 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 // ✅ Requirement
 export class CreateRequirementDto {
@@ -20,6 +26,14 @@ export class CreateRequirementDto {
   @IsString()
   @IsNotEmpty()
   sectionId: string;
+
+  @ApiProperty({
+    example: ['e3c2d8a456e59f04b7f6979', 'kbi2d8a456ea2f04l7f692r'],
+  })
+  @IsArray()
+  @IsNotEmpty()
+  @IsString({ each: true })
+  groupIds: string[];
 }
 
 export class UpdateRequirementDto extends PartialType(CreateRequirementDto) {}

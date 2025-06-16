@@ -125,6 +125,8 @@ model Company {
   createdAt       DateTime      @default(now())
 
   User User[]
+
+  Inspection Inspection[]
 }
 
 
@@ -159,6 +161,8 @@ model Requirement {
   groups         RequirementGroup[]   @relation("RequirementToGroup")
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+
+  Inspection Inspection[]
 }
 
 model RequirementGroup {
@@ -190,4 +194,46 @@ model RequirementChapter {
   sections       RequirementSection[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+}
+
+
+
+// inspection
+
+model Inspection {
+  id              String       @id @default(uuid())
+  title           String
+  type            InspectionType @default(INITIAL)
+  activitySector  String
+  description     String
+  startAt         DateTime
+  endAt           DateTime
+
+  companyId       String
+  company         Company      @relation(fields: [companyId], references: [id])
+
+  country         String?
+  region          String?
+  city            String?
+  address         String?
+
+  partnersLogos   String[]
+  
+  requirements    Requirement[]
+
+  status          InspectionStatus @default(BUILDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum InspectionType {
+  INITIAL
+  INTERNAL
+}
+
+enum InspectionStatus {
+  BUILDING
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }

@@ -27,7 +27,7 @@ export class RequirementSectionController {
 
   @Get()
   getAllSections() {
-    return this.requirementService.findGroups();
+    return this.requirementService.findSections();
   }
 
   @Get(':id')

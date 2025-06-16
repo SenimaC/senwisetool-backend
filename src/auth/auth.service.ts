@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AllRoles } from 'src/common/constants/roles.constant';
 import {
@@ -272,7 +273,7 @@ export class AuthService {
 
       const userVerified = await this.prisma.user.update({
         where: { email: email },
-        data: { isEmailVerified: true, status: 'ACTIVE' },
+        data: { isEmailVerified: true, status: UserStatus.ACTIVE },
       });
 
       if (!userVerified)
@@ -465,17 +466,6 @@ export class AuthService {
         );
 
       const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-      // if (!user.isEmailVerified) {
-      //   const userVerified = await this.prisma.user.update({
-      //     where: { email: user.email },
-      //     data: { password: hashedPassword },
-      //   });
-
-      //   if (!userVerified)
-      //     throw new Error(
-      //       "Erreur lors de la vérification de l'email de l'utilisateur",
-      //     );
-      // }
 
       await this.prisma.user.update({
         where: { email: user.email },
