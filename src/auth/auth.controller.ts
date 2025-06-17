@@ -11,7 +11,9 @@ import { AllRoles } from 'src/common/constants/roles.constant';
 import { CanAssignRole } from 'src/common/decorators/can-assign-role.decorator';
 import { Secure } from 'src/common/decorators/secure.decorator';
 import { ApiResponse } from 'src/common/types/api-response.type';
+import { CurrentUser } from 'src/common/types/user.type';
 import {
+  AssistantAccountDto,
   AuthRegisterDto,
   ChangePasswordDto,
   LoginDto,
@@ -22,6 +24,7 @@ import {
   VerifyEmailDto,
 } from 'src/user/user.dto';
 import { AuthUser } from '../common/decorators/auth-user.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -108,5 +111,15 @@ export class AuthController {
   @Secure('CONNECTED')
   logout(@AuthUser() user) {
     return this.authService.logout(user.id);
+  }
+
+  @Post('create-assistant-account')
+  @Secure('ACTIVE_USER')
+  @Roles(AllRoles.ASSISTANT)
+  createAssistantAccount(
+    @Body() dto: AssistantAccountDto,
+    @AuthUser() user: CurrentUser,
+  ) {
+    return this.authService.createAssistantAccount(dto, user);
   }
 }

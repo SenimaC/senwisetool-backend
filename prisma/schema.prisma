@@ -23,13 +23,6 @@ enum UserRole {
   ASSISTANT
 }
 
-enum AssistantRole {
-  MENDATAIRE
-  AGENT
-  INSPECTOR
-  TRAINER
-}
-
 enum UserStatus {
   REGISTERED
   ACTIVE
@@ -86,6 +79,8 @@ model User {
 
   roleId      String
   Role        Role     @relation(fields: [roleId], references: [id])
+
+  AssistantAccount AssistantAccount[]
 }
 
 enum CompanyStatus {
@@ -127,6 +122,43 @@ model Company {
   User User[]
 
   Inspection Inspection[]
+
+  AssistantAccount AssistantAccount[]
+}
+
+
+
+// Assistant accounts
+
+enum AssistantRole {
+  MENDATAIRE
+  AGENT
+  INSPECTOR
+  TRAINER
+}
+
+enum AssistantAccountStatus {
+  ACTIVE
+  BLOCKED
+  DISABLED
+}
+
+model AssistantAccount {
+  id            String                 @id @default(cuid())
+  email         String                 @unique
+  password      String
+  role          AssistantRole          @default(AGENT)
+  phoneNumber   String?
+
+  companyId     String
+  Company       Company                @relation(fields: [companyId], references: [id])
+
+  userId   String                      @unique
+  User     User                        @relation(fields: [userId], references: [id])
+
+  status        AssistantAccountStatus @default(ACTIVE)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 }
 
 

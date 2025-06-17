@@ -20,10 +20,11 @@ import {
 } from 'src/common/helpers/string-generator';
 import { ApiResponse } from 'src/common/types/api-response.type';
 import { EmailVerificationContext } from 'src/common/types/mail';
-import { LoginResponse } from 'src/common/types/user.type';
+import { CurrentUser, LoginResponse } from 'src/common/types/user.type';
 import { CompanyService } from 'src/company/company.service';
 import { MailService } from 'src/mail/mail.service';
 import {
+  AssistantAccountDto,
   LoginDto,
   RegisterDto,
   resendEmailVerificationDto,
@@ -491,6 +492,39 @@ export class AuthService {
       });
 
       return successResponse('Déconnexion réussie', 200);
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
+  /**
+   * create a assistant account
+   * @param user - Current user auth
+   */
+  async createAssistantAccount(dto: AssistantAccountDto, user: CurrentUser) {
+    try {
+      const existingAssistant = await this.prisma.assistantAccount.findFirst({
+        where: {
+          email: dto.email,
+          companyId: user.companyId,
+        },
+      });
+      if (existingAssistant) {
+        throw new BadRequestException(
+          'Un compte assistant avec cet email existe déjà pour cette entreprise.',
+        );
+      }
+
+      const newAccount = await this.prisma.assistantAccount.update({
+        where: { id: user.id },
+        data: {
+          ...dto,
+          User: { connect: { id: user.id } },
+          Company: { connect: { id: user.companyId } },
+        },
+      });
+
+      return successResponse('Compte assistant créé', 200, newAccount);
     } catch (error) {
       return errorResponse(error);
     }

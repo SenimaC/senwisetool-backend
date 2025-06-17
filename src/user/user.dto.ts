@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AssistantRole } from '@prisma/client';
 import {
   IsEmail,
   IsOptional,
@@ -169,4 +170,23 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+}
+
+export class AssistantAccountDto {
+  @ApiProperty({ example: 'assistant@example.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: 'my-secure-password' })
+  @IsString()
+  password: string;
+
+  @ApiProperty({ example: 'AGENT', description: "Role de l'assistant" })
+  @IsString()
+  role: AssistantRole;
+
+  @ApiPropertyOptional({ example: '+237612345678' })
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
 }
