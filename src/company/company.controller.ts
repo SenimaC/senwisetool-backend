@@ -16,7 +16,9 @@ import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { Company, UserRole } from '@prisma/client';
 import { S3Service } from 'src/aws/s3.service';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
+import { AllRoles } from 'src/common/constants/roles.constant';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { Secure } from 'src/common/decorators/secure.decorator';
 import { CurrentUser } from 'src/common/types/user.type';
 import {
@@ -159,7 +161,7 @@ export class CompanyController {
     description: "Valider la demande d'autorisation de création la compagnie",
     type: ValidateAutorizationDto,
   })
-  async validateAutorizationDto(@Body() dto: ValidateAutorizationDto) {
+  async validateAutorization(@Body() dto: ValidateAutorizationDto) {
     return this.companyService.ValidateAutorization(dto);
   }
 
@@ -177,6 +179,16 @@ export class CompanyController {
       throw new UnauthorizedException('Accès refusé');
 
     return this.companyService.RejetAutorization(dto);
+  }
+
+  @Patch('active-company')
+  @Secure('ACTIVE_USER')
+  @Roles(AllRoles.PDG)
+  @ApiBody({
+    description: 'Activation de la compagnie par le PDG',
+  })
+  async activeCompany(@AuthUser() user: CurrentUser) {
+    return this.companyService.ActiveCompany(user);
   }
 
   // gestion des compagnies *********************

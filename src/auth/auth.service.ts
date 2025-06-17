@@ -133,6 +133,7 @@ export class AuthService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email: dto.email },
+        include: { Role: true, Company: true },
       });
       if (!user || !(await bcrypt.compare(dto.password, user.password)))
         throw new ForbiddenException('Identifiants invalides');

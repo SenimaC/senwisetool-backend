@@ -94,7 +94,7 @@ export class InspectionController {
       }
     }
 
-    this.inspectionService.canManage(user.Role.name);
+    this.inspectionService.isInspectionManager(user.Role.name, user.companyId);
 
     const bucketName = user.Company.bucketName;
     const logoUrls: string[] = [];
@@ -123,27 +123,48 @@ export class InspectionController {
     return this.inspectionService.requirements(id, dto, user);
   }
 
+  @Patch(':id/validate-creation')
+  @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
+  @ApiOperation({ summary: 'Ajouter des requirements' })
+  @ApiParam({ name: 'id', description: 'ID de l’inspection' })
+  validateCreation(@Param('id') id: string, @AuthUser() user: CurrentUser) {
+    return this.inspectionService.validateCreation(id, user);
+  }
+
+  @Patch(':id/publish')
+  @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
+  @ApiOperation({ summary: 'Ajouter des requirements' })
+  @ApiParam({ name: 'id', description: 'ID de l’inspection' })
+  deploy(@Param('id') id: string, @AuthUser() user: CurrentUser) {
+    return this.inspectionService.publish(id, user);
+  }
+
   @Get()
   @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
   @ApiOperation({ summary: 'Lister toutes les inspections' })
-  findAll() {
-    return this.inspectionService.findAll();
+  findAll(@AuthUser() user: CurrentUser) {
+    return this.inspectionService.findAll(user.companyId);
   }
 
   @Get(':id')
   @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
   @ApiOperation({ summary: 'Récupérer une inspection par ID' })
   @ApiParam({ name: 'id', description: 'ID de l’inspection' })
-  findOne(@Param('id') id: string) {
-    return this.inspectionService.findOne(id);
+  findOne(@Param('id') id: string, @AuthUser() user: CurrentUser) {
+    return this.inspectionService.findOne(id, user.companyId);
   }
 
   @Put(':id')
   @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
   @ApiOperation({ summary: 'Mettre à jour une inspection' })
   @ApiParam({ name: 'id', description: 'ID de l’inspection' })
-  update(@Param('id') id: string, @Body() dto: CreateInspectionDto) {
-    return this.inspectionService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @AuthUser() user: CurrentUser,
+    @Body()
+    dto: Partial<CreateInspectionDto> | Partial<AddInspectionLocationDto>,
+  ) {
+    return this.inspectionService.update(id, user, dto);
   }
 
   @Delete(':id')
@@ -151,7 +172,7 @@ export class InspectionController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Supprimer une inspection' })
   @ApiParam({ name: 'id', description: 'ID de l’inspection' })
-  remove(@Param('id') id: string) {
-    return this.inspectionService.remove(id);
+  remove(@Param('id') id: string, @AuthUser() user: CurrentUser) {
+    return this.inspectionService.remove(id, user);
   }
 }

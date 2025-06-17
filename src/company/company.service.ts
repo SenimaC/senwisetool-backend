@@ -13,7 +13,7 @@ import {
 import { generate6DigitCode } from 'src/common/helpers/string-generator';
 import { CompanyResponse } from 'src/common/types/company.type';
 import { EmailVerificationContext } from 'src/common/types/mail';
-import { UserResponse } from 'src/common/types/user.type';
+import { CurrentUser, UserResponse } from 'src/common/types/user.type';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -352,6 +352,34 @@ export class CompanyService {
       return successResponse('Demande de rejet effectuée', 201);
     } catch (error) {
       errorResponse(error);
+    }
+  }
+
+  /**
+   * Valide l'autorisation de création de la compagnie par le OWNER
+   * @param dto - ValidateAutorizationDto
+   * @returns ApiResponse
+   */
+  async ActiveCompany(user: CurrentUser) {
+    try {
+      const company = await this.prisma.company.findUnique({
+        where: { id: user.companyId },
+      });
+
+      if (!company) {
+        throw new Error('Compagnie introuvable.');
+      }
+
+      const compagnyActived = await this.prisma.company.update({
+        where: { id: company.id },
+        data: {
+          status: CompanyStatus.ACTIVE,
+        },
+      });
+
+      return successResponse('Compagnie activée ', 201, compagnyActived);
+    } catch (error) {
+      return errorResponse(error);
     }
   }
 
