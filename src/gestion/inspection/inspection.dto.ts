@@ -80,10 +80,17 @@ export class AddInspectionLocationDto {
 
 export class InspectionRequirementsDto {
   @ApiProperty({
+    description: 'ID du chapitre',
+    example: 'id-req-1456789065c352f',
+  })
+  @IsString()
+  chapter: string;
+
+  @ApiProperty({
     description: 'Liste des IDs des exigences associées à cette inspection',
     example: ['id-req-1234567890', 'id-req-0987654321'],
     type: [String],
   })
   @IsArray()
-  requirements?: string[];
+  requirements: string[];
 }

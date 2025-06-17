@@ -30,6 +30,12 @@ export class RolesController {
     return this.roleService.getAllRoles();
   }
 
+  @Get('permissions')
+  @ApiOperation({ summary: 'Liste de toutes les permissions' })
+  async getPermissions() {
+    return this.roleService.getPermissions();
+  }
+
   @Get(':id')
   getRoleById(@Param('id') roleId: string) {
     return this.roleService.getRoleById(roleId);
@@ -94,12 +100,6 @@ export class RolesController {
   @ApiOperation({ summary: 'Supprimer une permission' })
   async deletePermission(@Param('id') id: string) {
     return this.roleService.deletePermission(id);
-  }
-
-  @Get('permissions')
-  @ApiOperation({ summary: 'Liste de toutes les permissions' })
-  async getPermissions() {
-    return this.roleService.getPermissions();
   }
 
   @Get('permissions/:id')

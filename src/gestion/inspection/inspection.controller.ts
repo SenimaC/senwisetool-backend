@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,20 +10,27 @@ import {
   Patch,
   Post,
   Put,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { User } from '@prisma/client';
+import { S3Service } from 'src/aws/s3.service';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { Secure } from 'src/common/decorators/secure.decorator';
+import { CurrentUser } from 'src/common/types/user.type';
 import {
   AddInspectionLocationDto,
   CreateInspectionDto,
+  InspectionRequirementsDto,
 } from './inspection.dto';
 import { InspectionService } from './inspection.service';
 
@@ -30,13 +38,16 @@ import { InspectionService } from './inspection.service';
 @ApiBearerAuth() // 🔐 Affiche le padlock dans Swagger
 @Controller('inspections')
 export class InspectionController {
-  constructor(private readonly inspectionService: InspectionService) {}
+  constructor(
+    private readonly s3Service: S3Service,
+    private readonly inspectionService: InspectionService,
+  ) {}
 
   @Post()
   @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
   @ApiOperation({ summary: 'Créer une inspection' })
-  create(@Body() dto: CreateInspectionDto, @AuthUser() user) {
-    return this.inspectionService.create(dto, user.companyId);
+  create(@Body() dto: CreateInspectionDto, @AuthUser() user: CurrentUser) {
+    return this.inspectionService.create(dto, user);
   }
 
   @Patch(':id/location')
@@ -46,9 +57,70 @@ export class InspectionController {
   addLocation(
     @Param('id') id: string,
     @Body() dto: AddInspectionLocationDto,
-    @AuthUser() user: User,
+    @AuthUser() user: CurrentUser,
   ) {
-    return this.inspectionService.addLocation(id, dto, user.id);
+    return this.inspectionService.addLocation(id, dto, user);
+  }
+
+  @Patch(':id/partners')
+  @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'logos', maxCount: 10 }]))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description:
+      'Uploader les logos de partenaires (max 10, images uniquement, 2MB max chacun)',
+  })
+  async partnersLogos(
+    @UploadedFiles()
+    files: {
+      logos?: Express.Multer.File[];
+    },
+    @Param('id') id: string,
+    @AuthUser() user: CurrentUser,
+  ) {
+    const logos = files.logos;
+
+    if (!logos || logos.length === 0)
+      throw new BadRequestException('Au moins un logo est obligatoire.');
+
+    for (const logo of logos) {
+      if (!logo.mimetype.startsWith('image/')) {
+        throw new BadRequestException(
+          'Tous les logos doivent être des images valides.',
+        );
+      }
+      if (logo.size > 2 * 1024 * 1024) {
+        throw new BadRequestException('Chaque logo ne doit pas dépasser 2MB.');
+      }
+    }
+
+    this.inspectionService.canManage(user.Role.name);
+
+    const bucketName = user.Company.bucketName;
+    const logoUrls: string[] = [];
+
+    for (const logo of logos) {
+      const url = await this.s3Service.uploadFile(
+        logo,
+        bucketName,
+        'partnersLogos',
+      );
+      logoUrls.push(url);
+    }
+
+    return this.inspectionService.partnersLogos(id, user.id, logoUrls);
+  }
+
+  @Patch(':id/requirements')
+  @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
+  @ApiOperation({ summary: 'Ajouter des requirements' })
+  @ApiParam({ name: 'id', description: 'ID de l’inspection' })
+  requirements(
+    @Param('id') id: string,
+    @Body() dto: InspectionRequirementsDto,
+    @AuthUser() user: CurrentUser,
+  ) {
+    return this.inspectionService.requirements(id, dto, user);
   }
 
   @Get()

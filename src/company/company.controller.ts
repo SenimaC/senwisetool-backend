@@ -173,7 +173,7 @@ export class CompanyController {
     @Body() dto: RejetAutorizationDto,
     @AuthUser() user: CurrentUser,
   ) {
-    if (user.role !== UserRole.OWNER)
+    if (user.Role.name !== UserRole.OWNER)
       throw new UnauthorizedException('Accès refusé');
 
     return this.companyService.RejetAutorization(dto);

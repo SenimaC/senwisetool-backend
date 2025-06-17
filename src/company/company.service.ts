@@ -306,7 +306,7 @@ export class CompanyService {
       );
 
       if (newUser.error) {
-        throw new ForbiddenException(newUser);
+        throw new ForbiddenException(newUser.message);
       }
 
       await this.prisma.user.update({

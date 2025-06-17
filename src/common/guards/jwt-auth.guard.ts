@@ -43,7 +43,7 @@ export class AuthGuard extends JwtAuthGuard('jwt') {
       if (!user.isEmailVerified || user.status !== 'ACTIVE')
         throw new ForbiddenException('Utilisateur inactif');
 
-      if (!user.company || user.company.status !== 'ACTIVE')
+      if (!user.companyId || user.Company.status !== 'ACTIVE')
         throw new ForbiddenException('Compagnie inactive');
     }
 

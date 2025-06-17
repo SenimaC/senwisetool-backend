@@ -1,4 +1,4 @@
-import { Role, UserRole } from '@prisma/client';
+import { Company, Role, User } from '@prisma/client';
 import { CompanyResponse } from './company.type';
 export enum UserRoles {
   DEVELOPER = 'DEVELOPER',
@@ -30,11 +30,10 @@ export enum AccountRole {
   TRAINER = 'TRAINER',
 }
 
-export interface CurrentUser {
-  id: string;
-  email: string;
-  role: UserRole;
-}
+export type CurrentUser = User & {
+  Company: Company;
+  Role: Role;
+};
 
 export type UserResponse = {
   id: string;
