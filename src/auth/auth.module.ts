@@ -14,7 +14,7 @@ import { JwtStrategy } from './jwt.strategy';
   imports: [
     forwardRef(() => CompanyModule), // ✅ Important
     MailModule,
-    UserModule,
+    forwardRef(() => UserModule),
     PrismaModule,
     PassportModule,
     JwtModule.register({

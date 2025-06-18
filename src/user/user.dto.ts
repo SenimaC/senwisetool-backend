@@ -177,16 +177,22 @@ export class AssistantAccountDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'my-secure-password' })
-  @IsString()
-  password: string;
-
-  @ApiProperty({ example: 'AGENT', description: "Role de l'assistant" })
-  @IsString()
-  role: AssistantRole;
-
   @ApiPropertyOptional({ example: '+237612345678' })
   @IsOptional()
   @IsString()
   phoneNumber?: string;
+
+  /**
+   * The role assigned to the assistant.
+   *
+   * Possible values:
+   * - 'MENDATAIRE': Represents a mandatary.
+   * - 'AGENT': Represents an agent.
+   * - 'INSPECTOR': Represents an inspector.
+   * - 'TRAINER': Represents a trainer.
+   */
+  @ApiPropertyOptional({ example: 'AGENT', description: "Role de l'assistant" })
+  @IsOptional()
+  @IsString()
+  role?: AssistantRole;
 }

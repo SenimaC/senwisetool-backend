@@ -29,6 +29,7 @@ import { Secure } from 'src/common/decorators/secure.decorator';
 import { CurrentUser } from 'src/common/types/user.type';
 import {
   AddInspectionLocationDto,
+  AssistanToAssignDto,
   CreateInspectionDto,
   InspectionRequirementsDto,
 } from './inspection.dto';
@@ -174,5 +175,17 @@ export class InspectionController {
   @ApiParam({ name: 'id', description: 'ID de l’inspection' })
   remove(@Param('id') id: string, @AuthUser() user: CurrentUser) {
     return this.inspectionService.remove(id, user);
+  }
+
+  @Post(':inspectionId/assignement')
+  @Secure('ACTIVE_COMPANY', AllPermissions.MANAGE_INSPECTION)
+  @ApiOperation({ summary: 'Assigner un projet à un compte assistant' })
+  @ApiParam({ name: 'inspectionId', description: 'ID de l’inspection' })
+  AddAssignement(
+    @Body() dto: AssistanToAssignDto,
+    @Param('inspectionId') inspectionId: string,
+    @AuthUser() user: CurrentUser,
+  ) {
+    return this.inspectionService.AddAssignement(inspectionId, dto, user);
   }
 }

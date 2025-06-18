@@ -159,6 +159,8 @@ model AssistantAccount {
   status        AssistantAccountStatus @default(ACTIVE)
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
+
+  ProjectAssignment ProjectAssignment[]
 }
 
 
@@ -260,6 +262,8 @@ model Inspection {
   Campaign        Campaign      @relation(fields: [campaignId], references: [id])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  ProjectAssignment ProjectAssignment[]
 }
 
 enum InspectionType {
@@ -272,4 +276,21 @@ enum InspectionStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+model ProjectAssignment {
+  id                String       @id @default(cuid())
+  assistantAccountId String
+  AssistantAccount   AssistantAccount @relation(fields: [assistantAccountId], references: [id])
+
+  inspectionId      String?
+  Inspection        Inspection? @relation(fields: [inspectionId], references: [id])
+
+  // mappingId      String? // À ajouter quand le modèle Mapping sera créé
+  // Mapping        Mapping? @relation(fields: [mappingId], references: [id])
+
+  // trainingId     String? // À ajouter quand le modèle Training sera créé
+  // Training       Training? @relation(fields: [trainingId], references: [id])
+
+  assignedAt        DateTime     @default(now())
 }

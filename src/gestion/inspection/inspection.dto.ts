@@ -94,3 +94,13 @@ export class InspectionRequirementsDto {
   @IsArray()
   requirements: string[];
 }
+
+export class AssistanToAssignDto {
+  @ApiProperty({
+    description: 'IDs des comptes assistants à associér',
+    example: ['id-assistant-1234567890', 'id-assistant-0987654321'],
+    type: [String],
+  })
+  @IsArray()
+  assistantAccountIds: string[];
+}

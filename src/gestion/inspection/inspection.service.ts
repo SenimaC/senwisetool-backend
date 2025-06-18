@@ -13,6 +13,7 @@ import { CurrentUser } from 'src/common/types/user.type';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   AddInspectionLocationDto,
+  AssistanToAssignDto,
   CreateInspectionDto,
   InspectionRequirementsDto,
 } from './inspection.dto';
@@ -310,6 +311,7 @@ export class InspectionService {
         include: {
           requirements: true,
           company: true,
+          ProjectAssignment: true,
         },
       });
 
@@ -369,6 +371,44 @@ export class InspectionService {
       await this.prisma.inspection.delete({
         where: { id },
       });
+
+      return successResponse('Suppression éffectuée avec succès');
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
+  async AddAssignement(
+    id: string,
+    dto: AssistanToAssignDto,
+    user: CurrentUser,
+  ) {
+    try {
+      const inspection = await this.findOne(id, user.companyId); // Vérifie si l’inspection existe
+
+      this.isInspectionManager(
+        user.Role.name,
+        user.companyId,
+        inspection.data.campaignId,
+      );
+
+      for (const assistantId of dto.assistantAccountIds) {
+        // Récupérer l'inspection avec les assignments existants
+        const existingAssignment = inspection.data.ProjectAssignment.find(
+          (assignment) =>
+            assignment.inspectionId === id &&
+            assignment.assistantAccountId === assistantId,
+        );
+
+        if (!existingAssignment) {
+          await this.prisma.projectAssignment.create({
+            data: {
+              AssistantAccount: { connect: { id: assistantId } },
+              Inspection: { connect: { id } },
+            },
+          });
+        }
+      }
 
       return successResponse('Suppression éffectuée avec succès');
     } catch (error) {

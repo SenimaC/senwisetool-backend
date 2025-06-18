@@ -1,20 +1,28 @@
 import {
+  BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { AuthService } from 'src/auth/auth.service';
 import { AllRoles } from 'src/common/constants/roles.constant';
 import {
   errorResponse,
   successResponse,
 } from 'src/common/helpers/api-response.helper';
-import { UserResponse } from 'src/common/types/user.type';
+import { CurrentUser, UserResponse } from 'src/common/types/user.type';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UpdateUserDto } from './user.dto';
+import { AssistantAccountDto, UpdateUserDto } from './user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+  ) {}
 
   async findAll() {
     try {
@@ -115,6 +123,74 @@ export class UserService {
       this.prisma.user.delete({ where: { id } });
 
       return successResponse('Utilisateur supprimé avec succès', 200);
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
+  async createAssistantAccount(dto: AssistantAccountDto, user: CurrentUser) {
+    try {
+      const existingAssistant = await this.prisma.assistantAccount.findFirst({
+        where: {
+          email: dto.email,
+          companyId: user.companyId,
+        },
+      });
+      if (existingAssistant) {
+        throw new BadRequestException(
+          'Un compte assistant avec cet email existe déjà pour cette entreprise.',
+        );
+      }
+
+      const hashedPassword = await this.authService.sendUserCredential(
+        dto.email,
+      );
+
+      const newAccount = await this.prisma.assistantAccount.update({
+        where: { id: user.id },
+        data: {
+          ...dto,
+          password: hashedPassword,
+          User: { connect: { id: user.id } },
+          Company: { connect: { id: user.companyId } },
+        },
+      });
+
+      return successResponse('Compte assistant créé', 200, newAccount);
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
+  async getAssistantAccounts(user: CurrentUser) {
+    try {
+      const assistantAccounts = await this.prisma.assistantAccount.findMany({
+        where: { companyId: user.companyId },
+        include: {
+          User: true,
+          Company: true,
+          ProjectAssignment: true,
+        },
+      });
+
+      return successResponse('Compte assistant créé', 200, assistantAccounts);
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+
+  async getAssistantAccount(user: CurrentUser, id: string) {
+    try {
+      const assistantAccount = await this.prisma.assistantAccount.findUnique({
+        where: { id, companyId: user.companyId },
+        include: {
+          User: true,
+          Company: true,
+          ProjectAssignment: true,
+        },
+      });
+
+      return successResponse('Compte assistant créé', 200, assistantAccount);
     } catch (error) {
       return errorResponse(error);
     }
