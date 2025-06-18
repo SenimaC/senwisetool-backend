@@ -11,6 +11,7 @@ import { Observable, from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AssignableRolesMap } from '../constants/roles.constant';
+import { CurrentUser } from '../types/user.type';
 
 @Injectable()
 export class CanAssignRoleInterceptor implements NestInterceptor {
@@ -18,7 +19,7 @@ export class CanAssignRoleInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const user = request.user as CurrentUser;
     const roleIdToAssign = request.body?.role;
 
     if (!user) throw new UnauthorizedException('Utilisateur non connecté');
@@ -32,12 +33,13 @@ export class CanAssignRoleInterceptor implements NestInterceptor {
         if (!role) {
           throw new ForbiddenException('Rôle à assigner introuvable');
         }
+        console.log('roooooo ', user);
 
-        const allowedRoleNames = AssignableRolesMap[user.role] || [];
+        const allowedRoleNames = AssignableRolesMap[user.Role.name] || [];
 
         if (!allowedRoleNames.includes(role.name)) {
           throw new ForbiddenException(
-            `Le rôle ${user.role} ne peut pas assigner le rôle ${role.name}`,
+            `Le rôle ${user.Role.name} ne peut pas assigner le rôle ${role.name}`,
           );
         }
 

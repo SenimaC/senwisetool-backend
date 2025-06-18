@@ -51,7 +51,11 @@ export class AuthService {
    * @param role - Optional role ID to assign to the user
    * @returns ApiResponse with success message and status code
    */
-  async register(dto: RegisterDto, role?: string): Promise<ApiResponse<any>> {
+  async register(
+    dto: RegisterDto,
+    role?: string,
+    companyId?: string,
+  ): Promise<ApiResponse<any>> {
     try {
       const existingUser = await this.prisma.user.findUnique({
         where: { email: dto.email },
@@ -104,13 +108,22 @@ export class AuthService {
 
       const hashedPassword = await this.sendUserCredential(dto.email);
 
-      const user = await this.prisma.user.create({
-        data: {
-          ...dto,
-          password: hashedPassword,
-          roleId,
-        },
-      });
+      const user = companyId
+        ? await this.prisma.user.create({
+            data: {
+              ...dto,
+              password: hashedPassword,
+              Role: { connect: { id: roleId } },
+              Company: { connect: { id: companyId } },
+            },
+          })
+        : await this.prisma.user.create({
+            data: {
+              ...dto,
+              password: hashedPassword,
+              Role: { connect: { id: roleId } },
+            },
+          });
 
       const userData = await this.userService.getUser(user.id);
       if (!user) throw new NotFoundException('Utilisateur introuvable');

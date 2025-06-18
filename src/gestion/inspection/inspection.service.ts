@@ -55,7 +55,7 @@ export class InspectionService {
         newInspection,
       );
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
@@ -64,36 +64,40 @@ export class InspectionService {
     dto: AddInspectionLocationDto,
     user: CurrentUser,
   ) {
-    // Vérifier que l'utilisateur appartient à la compagnie de l'inspection
-    const inspection = await this.prisma.inspection.findUnique({
-      where: { id: inspectionId },
-    });
+    try {
+      // Vérifier que l'utilisateur appartient à la compagnie de l'inspection
+      const inspection = await this.prisma.inspection.findUnique({
+        where: { id: inspectionId },
+      });
 
-    if (!inspection) {
-      throw new NotFoundException(
-        `Inspection avec ID "${inspectionId}" introuvable`,
+      if (!inspection) {
+        throw new NotFoundException(
+          `Inspection avec ID "${inspectionId}" introuvable`,
+        );
+      }
+
+      this.isInspectionManager(
+        user.Role.name,
+        user.companyId,
+        inspection.companyId,
       );
+
+      const updatedInspection = await this.prisma.inspection.update({
+        where: { id: inspectionId },
+        data: {
+          ...dto,
+        },
+        include: { requirements: true },
+      });
+
+      return successResponse(
+        'Localisation ajoutée avec succès',
+        200,
+        updatedInspection,
+      );
+    } catch (error) {
+      return errorResponse(error);
     }
-
-    this.isInspectionManager(
-      user.Role.name,
-      user.companyId,
-      inspection.companyId,
-    );
-
-    const updatedInspection = await this.prisma.inspection.update({
-      where: { id: inspectionId },
-      data: {
-        ...dto,
-      },
-      include: { requirements: true },
-    });
-
-    return successResponse(
-      'Localisation ajoutée avec succès',
-      200,
-      updatedInspection,
-    );
   }
 
   async partnersLogos(
@@ -126,7 +130,7 @@ export class InspectionService {
         inspectionUpdated,
       );
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
@@ -218,79 +222,87 @@ export class InspectionService {
         updatedInspection,
       );
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
   async validateCreation(inspectionId: string, user: CurrentUser) {
-    // Vérifier que l'utilisateur appartient à la compagnie de l'inspection
-    const inspection = await this.prisma.inspection.findUnique({
-      where: { id: inspectionId },
-    });
+    try {
+      // Vérifier que l'utilisateur appartient à la compagnie de l'inspection
+      const inspection = await this.prisma.inspection.findUnique({
+        where: { id: inspectionId },
+      });
 
-    if (!inspection) {
-      throw new NotFoundException(
-        `Inspection avec ID "${inspectionId}" introuvable`,
+      if (!inspection) {
+        throw new NotFoundException(
+          `Inspection avec ID "${inspectionId}" introuvable`,
+        );
+      }
+
+      this.isInspectionManager(
+        user.Role.name,
+        user.companyId,
+        inspection.companyId,
       );
+
+      const updatedInspection = await this.prisma.inspection.update({
+        where: { id: inspectionId },
+        data: {
+          status: InspectionStatus.DRAFT,
+        },
+        include: { requirements: true },
+      });
+
+      return successResponse(
+        'Localisation ajoutée avec succès',
+        200,
+        updatedInspection,
+      );
+    } catch (error) {
+      return errorResponse(error);
     }
-
-    this.isInspectionManager(
-      user.Role.name,
-      user.companyId,
-      inspection.companyId,
-    );
-
-    const updatedInspection = await this.prisma.inspection.update({
-      where: { id: inspectionId },
-      data: {
-        status: InspectionStatus.DRAFT,
-      },
-      include: { requirements: true },
-    });
-
-    return successResponse(
-      'Localisation ajoutée avec succès',
-      200,
-      updatedInspection,
-    );
   }
 
   async publish(inspectionId: string, user: CurrentUser) {
-    // Vérifier que l'utilisateur appartient à la compagnie de l'inspection
-    const inspection = await this.prisma.inspection.findUnique({
-      where: { id: inspectionId },
-    });
+    try {
+      // Vérifier que l'utilisateur appartient à la compagnie de l'inspection
+      const inspection = await this.prisma.inspection.findUnique({
+        where: { id: inspectionId },
+      });
 
-    if (!inspection) {
-      throw new NotFoundException(
-        `Inspection avec ID "${inspectionId}" introuvable`,
+      if (!inspection) {
+        throw new NotFoundException(
+          `Inspection avec ID "${inspectionId}" introuvable`,
+        );
+      }
+
+      this.isInspectionManager(
+        user.Role.name,
+        user.companyId,
+        inspection.companyId,
       );
+
+      const updatedInspection = await this.prisma.inspection.update({
+        where: { id: inspectionId },
+        data: {
+          status: InspectionStatus.PUBLISHED,
+        },
+        include: { requirements: true },
+      });
+
+      return successResponse(
+        'Localisation ajoutée avec succès',
+        200,
+        updatedInspection,
+      );
+    } catch (error) {
+      return errorResponse(error);
     }
-
-    this.isInspectionManager(
-      user.Role.name,
-      user.companyId,
-      inspection.companyId,
-    );
-
-    const updatedInspection = await this.prisma.inspection.update({
-      where: { id: inspectionId },
-      data: {
-        status: InspectionStatus.PUBLISHED,
-      },
-      include: { requirements: true },
-    });
-
-    return successResponse(
-      'Localisation ajoutée avec succès',
-      200,
-      updatedInspection,
-    );
   }
 
   async findAll(companyId: string) {
     try {
-      const inspections = this.prisma.inspection.findMany({
+      const inspections = await this.prisma.inspection.findMany({
         where: { companyId },
         include: {
           requirements: true,
@@ -300,7 +312,7 @@ export class InspectionService {
 
       return successResponse('List of inspections', 201, inspections);
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
@@ -321,7 +333,7 @@ export class InspectionService {
 
       return successResponse("Projet d'inspection trouvé", 204, inspection);
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
@@ -354,7 +366,7 @@ export class InspectionService {
         inspectionUpdated,
       );
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 

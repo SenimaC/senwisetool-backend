@@ -16,6 +16,7 @@ export const AssignableRolesMap: Record<RoleType, RoleType[]> = {
   OWNER: [AllRoles.PDG],
   LEAD_DEVELOPER: [
     AllRoles.DEVELOPER,
+    AllRoles.OWNER,
     AllRoles.PDG,
     AllRoles.DG,
     AllRoles.ADG,

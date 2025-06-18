@@ -1,16 +1,11 @@
-import {
-  Body,
-  Controller,
-  Patch,
-  Post,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Body, Controller, Patch, Post } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { AllRoles } from 'src/common/constants/roles.constant';
 import { CanAssignRole } from 'src/common/decorators/can-assign-role.decorator';
 import { Secure } from 'src/common/decorators/secure.decorator';
 import { ApiResponse } from 'src/common/types/api-response.type';
+import { CurrentUser } from 'src/common/types/user.type';
 import {
   AuthRegisterDto,
   ChangePasswordDto,
@@ -46,21 +41,16 @@ export class AuthController {
   })
   async authRegister(
     @Body() dto: AuthRegisterDto,
-    @AuthUser() user,
+    @AuthUser() user: CurrentUser,
   ): Promise<ApiResponse<any>> {
     const { role, ...rest } = dto;
-
-    if (!['OWNER', 'LEAD_DEVELOPER', 'DG', 'ADG'].includes(user.role)) {
-      throw new UnauthorizedException(
-        'Vous ne pouvez pas créer de compte avec ce rôle',
-      );
-    }
 
     const roleToAssign = role ?? AllRoles.DG;
 
     return this.authService.register(
       { firstName: 'user', lastName: 'user', email: rest.email },
       roleToAssign,
+      user.companyId,
     );
   }
 

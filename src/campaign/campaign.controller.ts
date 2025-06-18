@@ -9,6 +9,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { AllRoles } from 'src/common/constants/roles.constant';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { CreateCampaignDto } from './campaign.dto';
 import { CampaignService } from './campaign.service';
@@ -19,7 +20,7 @@ export class CampaignController {
   constructor(private readonly campaignService: CampaignService) {}
 
   @Post()
-  @Roles('OWNER')
+  @Roles(AllRoles.LEAD_DEVELOPER, AllRoles.OWNER)
   create(@Body() dto: CreateCampaignDto) {
     return this.campaignService.create(dto);
   }
@@ -37,13 +38,13 @@ export class CampaignController {
   }
 
   @Delete(':id')
-  @Roles('OWNER')
+  @Roles(AllRoles.LEAD_DEVELOPER, AllRoles.OWNER)
   remove(@Param('id') id: string) {
     return this.campaignService.remove(id);
   }
 
   @Put(':id')
-  @Roles('OWNER')
+  @Roles(AllRoles.LEAD_DEVELOPER, AllRoles.OWNER)
   update(@Param('id') id: string, @Body() dto: CreateCampaignDto) {
     return this.campaignService.update(id, dto);
   }
