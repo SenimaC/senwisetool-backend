@@ -19,7 +19,7 @@ export class CampaignService {
 
   async create(dto: CreateCampaignDto) {
     try {
-      const existCurrentCampaign = this.prisma.campaign.findFirst({
+      const existCurrentCampaign = await this.prisma.campaign.findFirst({
         where: { status: CampaignStatus.CURRENT },
       });
 
