@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -282,6 +283,11 @@ export class InspectionService {
         inspection.companyId,
       );
 
+      if (inspection.status !== InspectionStatus.DRAFT)
+        throw new ForbiddenException(
+          'Vous ne pouvez publier que des projets au status DRAFT',
+        );
+
       const updatedInspection = await this.prisma.inspection.update({
         where: { id: inspectionId },
         data: {
@@ -291,7 +297,7 @@ export class InspectionService {
       });
 
       return successResponse(
-        'Localisation ajoutée avec succès',
+        'Votre projet a été publié',
         200,
         updatedInspection,
       );

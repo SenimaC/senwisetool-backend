@@ -103,24 +103,26 @@ export class UserService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, user: CurrentUser) {
     try {
-      const user = await this.prisma.user.findUnique({
+      const userToDelete = await this.prisma.user.findUnique({
         where: { id },
         include: {
           Role: true,
         },
       });
 
-      if (!user) throw new NotFoundException('Utilisateur introuvable');
+      if (!userToDelete) throw new NotFoundException('Utilisateur introuvable');
 
-      if (user.Role.name === AllRoles.LEAD_DEVELOPER) {
+      if (userToDelete.Role.name === AllRoles.LEAD_DEVELOPER)
         throw new UnauthorizedException(
-          'Vous ne pouvez pas supprimer un utilisateur avec le rôle de Lead Developer',
+          'Vous ne pouvez pas supprimer un Lead Developer',
         );
-      }
 
-      this.prisma.user.delete({ where: { id } });
+      if (userToDelete.Role.name === user.Role.name)
+        throw new UnauthorizedException('Suppression interdite');
+
+      await this.prisma.user.delete({ where: { id } });
 
       return successResponse('Utilisateur supprimé avec succès', 200);
     } catch (error) {

@@ -36,13 +36,35 @@ export class RoleService {
 
   async assignPermissions(roleId: string, dto: { permissionIds: string[] }) {
     try {
+      // Récupérer les permissions actuelles du rôle
+      const role = await this.prisma.role.findUnique({
+        where: { id: roleId },
+        include: { permissions: true },
+      });
+      if (!role)
+        throw new NotFoundException(`Role with ID ${roleId} not found`);
+
+      // Extraire les IDs des permissions actuelles
+      const currentPermissionIds = role.permissions.map((p) => p.id);
+
+      // Déterminer les permissions à ajouter et à retirer
+      const toAdd = dto.permissionIds.filter(
+        (id) => !currentPermissionIds.includes(id),
+      );
+      const toRemove = currentPermissionIds.filter(
+        (id) => !dto.permissionIds.includes(id),
+      );
+
+      // Mettre à jour les permissions du rôle
       const newAssign = await this.prisma.role.update({
         where: { id: roleId },
         data: {
           permissions: {
-            connect: dto.permissionIds.map((id) => ({ id })),
+            connect: toAdd.map((id) => ({ id })),
+            disconnect: toRemove.map((id) => ({ id })),
           },
         },
+        include: { permissions: true },
       });
 
       return successResponse(

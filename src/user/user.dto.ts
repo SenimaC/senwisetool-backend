@@ -128,7 +128,9 @@ export class ResetPasswordDto {
 
   @ApiProperty({ example: 'StrongPass123' })
   @IsString()
-  @MinLength(6)
+  @MinLength(8, {
+    message: 'Le mot de passe doit contenir au moins 8 caractères',
+  })
   newPassword: string;
 }
 
@@ -151,12 +153,16 @@ export class ChangePasswordDto {
 
   @ApiProperty({ example: 'StrongPass123' })
   @IsString()
-  @MinLength(6)
+  @MinLength(8, {
+    message: 'Le mot de passe doit contenir au moins 8 caractères',
+  })
   currentPassword: string;
 
   @ApiProperty({ example: 'StrongPass123' })
   @IsString()
-  @MinLength(6)
+  @MinLength(8, {
+    message: 'Le mot de passe doit contenir au moins 8 caractères',
+  })
   newPassword: string;
 }
 

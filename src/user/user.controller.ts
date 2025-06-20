@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
-import { User } from '@prisma/client';
 import { AllPermissions } from 'src/common/constants/permissions.constant';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { Secure } from 'src/common/decorators/secure.decorator';
+import { CurrentUser } from 'src/common/types/user.type';
 import { UpdateUserDto } from './user.dto';
 import { UserService } from './user.service';
 
@@ -18,7 +18,7 @@ export class UserController {
 
   @Get('me')
   @Secure('CONNECTED')
-  getMe(@AuthUser() user: User) {
+  getMe(@AuthUser() user: CurrentUser) {
     return this.userService.getUser(user.id);
   }
 
@@ -36,7 +36,7 @@ export class UserController {
 
   @Delete(':id')
   @Secure('ACTIVE_USER', AllPermissions.USER_MANAGER)
-  remove(@Param('id') id: string) {
-    return this.userService.remove(id);
+  remove(@Param('id') id: string, @AuthUser() user: CurrentUser) {
+    return this.userService.remove(id, user);
   }
 }

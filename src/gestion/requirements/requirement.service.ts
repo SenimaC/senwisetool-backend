@@ -420,20 +420,20 @@ export class RequirementService {
     const section = await this.prisma.requirementSection.findUnique({
       where: { number },
     });
-    if (!section) throw new NotFoundException('Section already exist');
+    if (section) throw new NotFoundException('Section already exist');
   }
 
   private async groupExist(name: string) {
-    const section = await this.prisma.requirementGroup.findUnique({
+    const group = await this.prisma.requirementGroup.findUnique({
       where: { name },
     });
-    if (!section) throw new NotFoundException('Section already exist');
+    if (group) throw new NotFoundException('Group already exist');
   }
 
   private async requirementExist(number: string) {
-    const section = await this.prisma.requirement.findUnique({
+    const requirement = await this.prisma.requirement.findUnique({
       where: { number },
     });
-    if (!section) throw new NotFoundException('Section already exist');
+    if (requirement) throw new NotFoundException('Requirement already exist');
   }
 }

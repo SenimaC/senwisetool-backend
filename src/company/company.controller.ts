@@ -200,7 +200,7 @@ export class CompanyController {
   }
 
   @Get('me')
-  @Secure('ACTIVE_USER', AllPermissions.VIEW_COMPANY)
+  @Secure('ACTIVE_USER')
   getSelfCompany(@AuthUser() user) {
     const id = user.companyId;
     if (!id) {

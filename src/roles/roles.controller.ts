@@ -53,17 +53,11 @@ export class RolesController {
 
   @Patch(':id/permissions')
   @ApiOperation({ summary: 'Assigner des permissions à un rôle' })
-  @ApiParam({
-    name: 'id',
-    description: 'ID du rôle',
-    type: 'string',
-    example: 'uuid-role',
-  })
   async assignPermissions(
-    @Param('id') roleId: string,
+    @Param('id') id: string,
     @Body() dto: AssignPermissionsDto,
   ) {
-    return this.roleService.assignPermissions(roleId, dto);
+    return this.roleService.assignPermissions(id, dto);
   }
 
   // permission manager
@@ -124,17 +118,5 @@ export class RolesController {
   })
   async getRolePermissions(@Param('id') roleId: string) {
     return this.roleService.getRolePermissions(roleId);
-  }
-
-  @Delete(':id/permissions')
-  @ApiOperation({ summary: 'Retirer toutes les permissions d’un rôle' })
-  @ApiParam({
-    name: 'id',
-    description: 'ID du rôle',
-    type: 'string',
-    example: 'uuid-role',
-  })
-  async removeAllPermissions(@Param('id') roleId: string) {
-    return this.roleService.removeAllPermissions(roleId);
   }
 }

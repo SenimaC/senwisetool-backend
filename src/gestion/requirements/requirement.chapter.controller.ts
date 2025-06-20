@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AllRoles } from 'src/common/constants/roles.constant';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { Secure } from 'src/common/decorators/secure.decorator';
 import {
   CreateRequirementChapterDto,
   UpdateRequirementChapterDto,
@@ -16,26 +17,29 @@ import {
 import { RequirementService } from './requirement.service';
 
 @Controller('requirement-chapters')
-@Roles(AllRoles.OWNER, AllRoles.LEAD_DEVELOPER)
 export class RequirementChapterController {
   constructor(private readonly requirementService: RequirementService) {}
 
   @Post()
+  @Roles(AllRoles.OWNER, AllRoles.LEAD_DEVELOPER)
   createChapter(@Body() dto: CreateRequirementChapterDto) {
     return this.requirementService.createChapter(dto);
   }
 
   @Get()
+  @Secure('CONNECTED')
   getAllChapters() {
     return this.requirementService.findChapters();
   }
 
   @Get(':id')
+  @Secure('CONNECTED')
   getChapterById(@Param('id') id: string) {
     return this.requirementService.findChapter(id);
   }
 
   @Patch(':id')
+  @Roles(AllRoles.OWNER, AllRoles.LEAD_DEVELOPER)
   updateChapter(
     @Param('id') id: string,
     @Body() dto: UpdateRequirementChapterDto,
@@ -44,6 +48,7 @@ export class RequirementChapterController {
   }
 
   @Delete(':id')
+  @Roles(AllRoles.OWNER, AllRoles.LEAD_DEVELOPER)
   deleteChapter(@Param('id') id: string) {
     return this.requirementService.deleteChapter(id);
   }

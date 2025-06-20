@@ -97,7 +97,7 @@ export class S3Service {
     folder?: string,
   ): Promise<string> {
     const uniqFileName = uniqueString(file.originalname);
-    const fileName = folder ? `${folder}/uniqFileName` : uniqFileName;
+    const fileName = folder ? `${folder}/${uniqFileName}` : uniqFileName;
 
     await this.s3.send(
       new PutObjectCommand({

@@ -8,7 +8,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserService } from './user.service';
 
 @Controller('users/assistant')
-export class AuthController {
+export class AssisTantController {
   constructor(private userService: UserService) {}
 
   @Post()
