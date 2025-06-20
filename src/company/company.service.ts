@@ -82,7 +82,7 @@ export class CompanyService {
         newCompany as CompanyResponse,
       );
     } catch (error) {
-      errorResponse(error);
+      return errorResponse(error);
     }
   }
 
