@@ -233,10 +233,12 @@ export class RequirementService {
     try {
       if (dto.number) await this.sectionExist(dto.number);
 
+      const { groupIds, ...rest } = dto;
+
       const newRequirement = await this.prisma.requirement.create({
         data: {
-          ...dto,
-          groups: { connect: dto.groupIds?.map((id) => ({ id })) },
+          ...rest,
+          groups: { connect: groupIds?.map((id) => ({ id })) },
         },
       });
 

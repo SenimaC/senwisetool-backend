@@ -1,18 +1,35 @@
-import { PrismaClient, RequirementGroup } from '@prisma/client';
+import {
+  PrismaClient,
+  RequirementGroup,
+  RequirementGroupType,
+} from '@prisma/client';
 import { CreateRequirementGroupDto } from '../../src/gestion/requirements/requirement.dto';
 
 const requirementGroups: CreateRequirementGroupDto[] = [
   {
-    name: 'Groupe Authentification',
-    description: 'Exigences liées à la sécurité et authentification.',
+    name: 'Petites exploitations agricoles',
+    description: '',
+    type: RequirementGroupType.GROUP_CERTIFICATION,
   },
   {
-    name: 'Groupe Interface Utilisateur',
-    description: 'Concernant les éléments d’UI et UX.',
+    name: 'Grandes exploitations agricoles',
+    description: '',
+    type: RequirementGroupType.GROUP_CERTIFICATION,
   },
   {
-    name: 'Groupe Notifications',
-    description: 'Emails, alertes et messages système.',
+    name: 'Direction du groupe',
+    description: '',
+    type: RequirementGroupType.GROUP_CERTIFICATION,
+  },
+  {
+    name: 'Petites/Grandes exploitations agricoles',
+    description: '',
+    type: RequirementGroupType.INDIVIDUAL_CERTIFICATION,
+  },
+  {
+    name: 'Systeme de gestion interne (SGI)',
+    description: '',
+    type: RequirementGroupType.INDIVIDUAL_CERTIFICATION,
   },
 ];
 

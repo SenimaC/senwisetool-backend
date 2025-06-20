@@ -1,5 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
+import { RequirementGroupType } from '@prisma/client';
 import {
   IsArray,
   IsInt,
@@ -44,6 +45,16 @@ export class CreateRequirementGroupDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  // Importez l'enum depuis le schéma Prisma généré
+
+  @ApiProperty({
+    enum: RequirementGroupType,
+    example: RequirementGroupType.GROUP_CERTIFICATION,
+  })
+  @IsString()
+  @IsNotEmpty()
+  type: RequirementGroupType;
 
   @ApiProperty({
     example:

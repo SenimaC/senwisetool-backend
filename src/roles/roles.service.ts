@@ -344,26 +344,4 @@ export class RoleService {
       return errorResponse(error);
     }
   }
-
-  async removeAllPermissions(roleId: string) {
-    try {
-      if (!roleId || typeof roleId !== 'string') {
-        throw new Error('Role ID is required');
-      }
-      const role = await this.prisma.role.findUnique({
-        where: { id: roleId },
-        include: { permissions: true },
-      });
-      if (!role) {
-        throw new NotFoundException(`Role with ID ${roleId} not found`);
-      }
-      await this.prisma.role.update({
-        where: { id: roleId },
-        data: { permissions: { set: [] } },
-      });
-      return successResponse('All permissions removed from role', 200, null);
-    } catch (error) {
-      return errorResponse(error);
-    }
-  }
 }
